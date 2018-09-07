@@ -1,0 +1,9 @@
+﻿  源.cpp
+源.cpp(22): warning C4316: “HandModel”: 在堆上分配的对象可能不是对齐 16
+  正在生成代码
+  3722 of 6321 functions (58.9%) were compiled, the rest were copied from previous compilation.
+    14 functions were new in current compilation
+    105 functions had inline decision re-evaluated but remain unchanged
+  已完成代码的生成
+  HandmodelJacobainCompute.vcxproj -> O:\vsstudioProjects\HandmodelJacobainCompute\Release\HandmodelJacobainCompute.exe
+  HandmodelJacobainCompute.vcxproj -> O:\vsstudioProjects\HandmodelJacobainCompute\Release\HandmodelJacobainCompute.pdb (Full PDB)

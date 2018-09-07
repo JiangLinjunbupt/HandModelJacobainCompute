@@ -1,0 +1,13 @@
+﻿  源.cpp
+o:\vsstudioprojects\handmodeljacobaincompute\handmodeljacobaincompute\源.cpp(22): warning C4316: “HandModel”: 在堆上分配的对象可能不是对齐 16
+  HandModel.cpp
+o:\vsstudioprojects\handmodeljacobaincompute\handmodeljacobaincompute\handmodel.cpp(7): warning C4316: “Joint”: 在堆上分配的对象可能不是对齐 16
+o:\vsstudioprojects\handmodeljacobaincompute\handmodeljacobaincompute\handmodel.cpp(309): warning C4244: “初始化”: 从“double”转换到“float”，可能丢失数据
+o:\vsstudioprojects\handmodeljacobaincompute\handmodeljacobaincompute\handmodel.cpp(310): warning C4244: “初始化”: 从“double”转换到“float”，可能丢失数据
+o:\vsstudioprojects\handmodeljacobaincompute\handmodeljacobaincompute\handmodel.cpp(312): warning C4244: “初始化”: 从“double”转换到“float”，可能丢失数据
+o:\vsstudioprojects\handmodeljacobaincompute\handmodeljacobaincompute\handmodel.cpp(313): warning C4244: “初始化”: 从“double”转换到“float”，可能丢失数据
+o:\vsstudioprojects\handmodeljacobaincompute\handmodeljacobaincompute\handmodel.cpp(315): warning C4244: “初始化”: 从“double”转换到“float”，可能丢失数据
+o:\vsstudioprojects\handmodeljacobaincompute\handmodeljacobaincompute\handmodel.cpp(316): warning C4244: “初始化”: 从“double”转换到“float”，可能丢失数据
+  正在生成代码...
+  HandmodelJacobainCompute.vcxproj -> O:\vsstudioProjects\HandmodelJacobainCompute\Debug\HandmodelJacobainCompute.exe
+  HandmodelJacobainCompute.vcxproj -> O:\vsstudioProjects\HandmodelJacobainCompute\Debug\HandmodelJacobainCompute.pdb (Full PDB)
