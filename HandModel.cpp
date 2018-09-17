@@ -298,10 +298,10 @@ HandModel::HandModel()
 	Updata(Params);
 
 	//save_target_vertices();
-	load_target_vertices();
+	//load_target_vertices();
 	
 	//save_target_joints();
-	load_target_joints();
+	//load_target_joints();
 
 	Solved = false;
 }
@@ -355,6 +355,9 @@ void HandModel::load_vertices(char* filename)
 	//int number;
 	f >> NumofVertices;
 	Vectices = Eigen::MatrixXf::Zero(NumofVertices,3);
+
+	Vertices_normal = Eigen::MatrixXf::Zero(NumofVertices, 3);
+
 	for (int i = 0; i < NumofVertices; i++) {
 		f >> Vectices(i,0) >> Vectices(i,1)>> Vectices(i,2);
 	}
@@ -540,7 +543,9 @@ void HandModel::Updata(float* params)
 
 	Updata_Joints_Axis();
 	Updata_Vertics();
-	Updata_Jacobian();
+	//Updata_Jacobian();
+
+	Compute_normal_And_visibel_vertices();
 
 	Joint_matrix = Eigen::MatrixXf::Zero(NumofJoints, 3);
 	for (int i = 0; i < NumofJoints; i++)
@@ -888,4 +893,57 @@ void HandModel::MoveToVerticeTarget()
 	{
 		Solved = false;
 	}
+}
+
+void HandModel::Compute_normal_And_visibel_vertices()
+{
+	Visible_vertices.clear();
+	Visible_vertices_index.clear();
+
+	Vertices_normal.setZero();
+	Vector3f A,B,C,BA, BC;
+	for (int i = 0; i < NumofFaces; i++)
+	{
+		//这里我假设，如果假设错了，那么叉乘时候，就BC*BA变成BA*BC
+		//            A
+		//          /  \
+		//         B — C
+		A << Vectices(FaceIndex(i, 0), 0), Vectices(FaceIndex(i, 0), 1), Vectices(FaceIndex(i, 0), 2);
+		B << Vectices(FaceIndex(i, 1), 0), Vectices(FaceIndex(i, 1), 1), Vectices(FaceIndex(i, 1), 2);
+		C << Vectices(FaceIndex(i, 2), 0), Vectices(FaceIndex(i, 2), 1), Vectices(FaceIndex(i, 2), 2);
+
+		BC << C - B;
+		BA << A - B;
+
+		Vector3f nom(BA.cross(BC));
+
+		nom.normalize();
+
+		Vertices_normal(FaceIndex(i, 0), 0) += nom(0);
+		Vertices_normal(FaceIndex(i, 1), 0) += nom(0);
+		Vertices_normal(FaceIndex(i, 2), 0) += nom(0);
+
+		Vertices_normal(FaceIndex(i, 0), 1) += nom(1);
+		Vertices_normal(FaceIndex(i, 1), 1) += nom(1);
+		Vertices_normal(FaceIndex(i, 2), 1) += nom(1);
+
+		Vertices_normal(FaceIndex(i, 0), 2) += nom(2);
+		Vertices_normal(FaceIndex(i, 1), 2) += nom(2);
+		Vertices_normal(FaceIndex(i, 2), 2) += nom(2);
+
+	}
+
+	for (int i = 0; i < Vertices_normal.rows(); i++)
+	{
+		Vertices_normal.row(i).normalize();
+
+		if (-(Vertices_normal(i, 2)) >= 0)
+		{
+			Vector3f visible_v(Vectices(i, 0), Vectices(i, 1),Vectices(i, 2));
+			Visible_vertices.push_back(visible_v);
+			Visible_vertices_index.push_back(i);
+		}
+	}
+
+	cout << "visible vertices find done!" << endl;
 }

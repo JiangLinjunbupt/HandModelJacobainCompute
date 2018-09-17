@@ -84,80 +84,90 @@ void draw() {
 
 
 
-	/* render the scene here */
-	{
-		glPointSize(2);
-		glBegin(GL_POINTS);
-		glColor3d(1.0, 0.0, 0.0);
-		for (int i = 0; i < handmodel->NumofVertices; i++) {
-			glVertex3d(handmodel->vertices_update_(i, 0), handmodel->vertices_update_(i, 1), handmodel->vertices_update_(i, 2));
-		}
-		glEnd();
+	///* render the scene here */
+	//{
+	//	glPointSize(2);
+	//	glBegin(GL_POINTS);
+	//	glColor3d(1.0, 0.0, 0.0);
+	//	for (int i = 0; i < handmodel->NumofVertices; i++) {
+	//		glVertex3d(handmodel->vertices_update_(i, 0), handmodel->vertices_update_(i, 1), handmodel->vertices_update_(i, 2));
+	//	}
+	//	glEnd();
 
 
-		glPointSize(2);
-		glBegin(GL_POINTS);
-		glColor3d(0.0, 1.0, 0.0);
-		for (int i = 0; i < handmodel->NumofVertices; i++) {
-			glVertex3d(handmodel->Target_vertices(i, 0), handmodel->Target_vertices(i, 1), handmodel->Target_vertices(i, 2));
-		}
-		glEnd();
+	//	glPointSize(2);
+	//	glBegin(GL_POINTS);
+	//	glColor3d(0.0, 1.0, 0.0);
+	//	for (int i = 0; i < handmodel->NumofVertices; i++) {
+	//		glVertex3d(handmodel->Target_vertices(i, 0), handmodel->Target_vertices(i, 1), handmodel->Target_vertices(i, 2));
+	//	}
+	//	glEnd();
 
 
-		for (int i = 0; i < handmodel->NumofVertices; i = i+10) {
-			glVertex3d(handmodel->Target_vertices(i, 0), handmodel->Target_vertices(i, 1), handmodel->Target_vertices(i, 2));
-			glLineWidth(1);
-			glColor3f(1.0, 1.0, 1.0);
-			glBegin(GL_LINES);
-			glVertex3d(handmodel->Target_vertices(i, 0), handmodel->Target_vertices(i, 1), handmodel->Target_vertices(i, 2));
-			glVertex3d(handmodel->vertices_update_(i, 0), handmodel->vertices_update_(i, 1), handmodel->vertices_update_(i, 2));
-			glEnd();
-		}
+	//	for (int i = 0; i < handmodel->NumofVertices; i = i+10) {
+	//		glVertex3d(handmodel->Target_vertices(i, 0), handmodel->Target_vertices(i, 1), handmodel->Target_vertices(i, 2));
+	//		glLineWidth(1);
+	//		glColor3f(1.0, 1.0, 1.0);
+	//		glBegin(GL_LINES);
+	//		glVertex3d(handmodel->Target_vertices(i, 0), handmodel->Target_vertices(i, 1), handmodel->Target_vertices(i, 2));
+	//		glVertex3d(handmodel->vertices_update_(i, 0), handmodel->vertices_update_(i, 1), handmodel->vertices_update_(i, 2));
+	//		glEnd();
+	//	}
+	//}
+
+
+	//for (int i = 0; i < handmodel->NumofJoints; i++) {
+	//	//画点开始 
+	//	glColor3f(1.0, 0.0, 0.0);
+	//	glPushMatrix();
+	//	glTranslatef(handmodel->Joints[i].CorrespondingPosition(0), handmodel->Joints[i].CorrespondingPosition(1), handmodel->Joints[i].CorrespondingPosition(2));
+	//	glutSolidSphere(5, 31, 10);
+	//	glPopMatrix();
+
+	//	//画点结束，使用push和popmatrix是因为保证每个关节点的偏移都是相对于全局坐标中心点做的变换。
+
+	//	int parent_joint_index = handmodel->Joints[i].parent_joint_index;
+	//	//画线开始  //不画wrist到arm的那条线
+	//	if (parent_joint_index != -1) {
+	//		glLineWidth(5);
+	//		glColor3f(0.0, 1.0, 0);
+	//		glBegin(GL_LINES);
+	//		glVertex3f(handmodel->Joints[i].CorrespondingPosition(0), handmodel->Joints[i].CorrespondingPosition(1), handmodel->Joints[i].CorrespondingPosition(2));
+	//		glVertex3f(handmodel->Joints[parent_joint_index].CorrespondingPosition(0), handmodel->Joints[parent_joint_index].CorrespondingPosition(1), handmodel->Joints[parent_joint_index].CorrespondingPosition(2));
+	//		glEnd();
+	//	}
+
+	//	//glLineWidth(2);
+	//	//glColor3f(1.0, 1.0, 1);
+	//	//glBegin(GL_LINES);
+	//	//glVertex3f(handmodel->Joints[i].CorrespondingPosition(0), handmodel->Joints[i].CorrespondingPosition(1), handmodel->Joints[i].CorrespondingPosition(2));
+	//	//glVertex3f(handmodel->Target_joints(i, 0), handmodel->Target_joints(i, 1), handmodel->Target_joints(i, 2));
+	//	//glEnd();
+
+	//	//画线结束
+	//}
+
+
+	//for (int i = 0; i < handmodel->NumofJoints; i++) {
+	//	//画点开始 
+	//	glColor3f(0.0, 1.0, 0.0);
+	//	glPushMatrix();
+	//	glTranslatef(handmodel->Target_joints(i,0), handmodel->Target_joints(i,1), handmodel->Target_joints(i,2));
+	//	glutSolidSphere(5, 31, 10);
+	//	glPopMatrix();
+
+	//	//画点结束，使用push和popmatrix是因为保证每个关节点的偏移都是相对于全局坐标中心点做的变换。
+	//}
+
+	glPointSize(2);
+	glBegin(GL_POINTS);
+	glColor3d(1.0, 0.0, 0.0);
+	for (int i = 0; i < handmodel->Visible_vertices.size(); i++) {
+		glVertex3d(handmodel->Visible_vertices[i](0), handmodel->Visible_vertices[i](1), handmodel->Visible_vertices[i](2));
 	}
+	glEnd();
 
 
-	for (int i = 0; i < handmodel->NumofJoints; i++) {
-		//画点开始 
-		glColor3f(1.0, 0.0, 0.0);
-		glPushMatrix();
-		glTranslatef(handmodel->Joints[i].CorrespondingPosition(0), handmodel->Joints[i].CorrespondingPosition(1), handmodel->Joints[i].CorrespondingPosition(2));
-		glutSolidSphere(5, 31, 10);
-		glPopMatrix();
-
-		//画点结束，使用push和popmatrix是因为保证每个关节点的偏移都是相对于全局坐标中心点做的变换。
-
-		int parent_joint_index = handmodel->Joints[i].parent_joint_index;
-		//画线开始  //不画wrist到arm的那条线
-		if (parent_joint_index != -1) {
-			glLineWidth(5);
-			glColor3f(0.0, 1.0, 0);
-			glBegin(GL_LINES);
-			glVertex3f(handmodel->Joints[i].CorrespondingPosition(0), handmodel->Joints[i].CorrespondingPosition(1), handmodel->Joints[i].CorrespondingPosition(2));
-			glVertex3f(handmodel->Joints[parent_joint_index].CorrespondingPosition(0), handmodel->Joints[parent_joint_index].CorrespondingPosition(1), handmodel->Joints[parent_joint_index].CorrespondingPosition(2));
-			glEnd();
-		}
-
-		glLineWidth(2);
-		glColor3f(1.0, 1.0, 1);
-		glBegin(GL_LINES);
-		glVertex3f(handmodel->Joints[i].CorrespondingPosition(0), handmodel->Joints[i].CorrespondingPosition(1), handmodel->Joints[i].CorrespondingPosition(2));
-		glVertex3f(handmodel->Target_joints(i, 0), handmodel->Target_joints(i, 1), handmodel->Target_joints(i, 2));
-		glEnd();
-
-		//画线结束
-	}
-
-
-	for (int i = 0; i < handmodel->NumofJoints; i++) {
-		//画点开始 
-		glColor3f(0.0, 1.0, 0.0);
-		glPushMatrix();
-		glTranslatef(handmodel->Target_joints(i,0), handmodel->Target_joints(i,1), handmodel->Target_joints(i,2));
-		glutSolidSphere(5, 31, 10);
-		glPopMatrix();
-
-		//画点结束，使用push和popmatrix是因为保证每个关节点的偏移都是相对于全局坐标中心点做的变换。
-	}
 	glFlush();
 	glutSwapBuffers();
 }
@@ -174,44 +184,44 @@ void mouseMotion(int x, int y) {
 /* executed when program is idle */
 void idle() {
 
-	//Begin = clock();//开始计时
-	//for (int i = 0; i < 27; i++)
-	//{
-	//	GetGloveData[i] = GetSharedMemeryPtr[i];
-	//}
-	//GetGloveData[16] = -GetGloveData[16];
-	//GetGloveData[17] = -GetGloveData[17];
-	//GetGloveData[18] = -GetGloveData[18];
-
-
-	////GetGloveData[9] = 90;
-	////GetGloveData[0] = 90;
-	////GetGloveData[2] = 60;
-	////GetGloveData[15] = 30;
-	////GetGloveData[16] = -30;
-	////GetGloveData[17] = -50;
-	////GetGloveData[24] = 20;
-	////GetGloveData[25] = 10;
-	////GetGloveData[26] = -50;
-
-	//handmodel->Updata(GetGloveData);
-
-
-	//End = clock();//结束计时
-	//duration = double(End - Begin) / CLK_TCK;//duration就是运行函数所打的
-
-	//std::cout << "time is : " << duration*1000 << std::endl;
-
-	if (!handmodel->Solved)
+	Begin = clock();//开始计时
+	for (int i = 0; i < 27; i++)
 	{
-		handmodel->MoveToVerticeTarget();
-
-		for (int i = 0; i < handmodel->NumberofParams; i++)
-		{
-			std::cout << handmodel->Params[i] << "  ";
-		}
-		std::cout << std::endl << std::endl;
+		GetGloveData[i] = GetSharedMemeryPtr[i];
 	}
+	GetGloveData[16] = -GetGloveData[16];
+	GetGloveData[17] = -GetGloveData[17];
+	GetGloveData[18] = -GetGloveData[18];
+
+
+	//GetGloveData[9] = 90;
+	//GetGloveData[0] = 90;
+	//GetGloveData[2] = 60;
+	//GetGloveData[15] = 30;
+	//GetGloveData[16] = -30;
+	//GetGloveData[17] = -50;
+	//GetGloveData[24] = 20;
+	//GetGloveData[25] = 10;
+	//GetGloveData[26] = -50;
+
+	handmodel->Updata(GetGloveData);
+
+
+	End = clock();//结束计时
+	duration = double(End - Begin) / CLK_TCK;//duration就是运行函数所打的
+
+	std::cout << "time is : " << duration*1000 << std::endl;
+
+	//if (!handmodel->Solved)
+	//{
+	//	handmodel->MoveToVerticeTarget();
+
+	//	for (int i = 0; i < handmodel->NumberofParams; i++)
+	//	{
+	//		std::cout << handmodel->Params[i] << "  ";
+	//	}
+	//	std::cout << std::endl << std::endl;
+	//}
 	glutPostRedisplay();
 }
 
