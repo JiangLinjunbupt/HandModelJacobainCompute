@@ -1,5 +1,16 @@
 #include"HandModel.h"
 
+void HandModel::load_glove_data()
+{
+	std::ifstream f;
+
+	f.open("gloveParams3.txt", std::ios::in);
+	for (int i = 0; i < 27; i++) {
+		f >> Params[i];
+	}
+	f.close();
+	printf("Load visible vertices succeed!!!\n");
+}
 
 HandModel::HandModel()
 {
@@ -289,6 +300,10 @@ HandModel::HandModel()
 	//Params[24] = 20;
 	//Params[25] = 10;
 	//Params[26] = -50;
+	load_glove_data();
+	Params[16] = -Params[16];
+	Params[17] = -Params[17];
+	Params[18] = -Params[18];
 
 	jacobian = Eigen::MatrixXf::Zero(NumofVertices * 3, NumberofParams);
 	Joints_jacobian = Eigen::MatrixXf::Zero(NumofJoints * 3, NumberofParams);
@@ -302,8 +317,23 @@ HandModel::HandModel()
 	
 	//save_target_joints();
 	//load_target_joints();
-
+	load_visible_vertices();
 	Solved = false;
+}
+
+
+void HandModel::load_visible_vertices()
+{
+	std::ifstream f;
+	//f.open(".\\model\\visible_Vertices.txt", std::ios::in);
+	f.open("Kinect_Point_cloud3.txt", std::ios::in);
+	f >> Load_visible_vertices_NUM;
+	Load_visible_vertices = Eigen::MatrixXf::Zero(Load_visible_vertices_NUM, 3);
+	for (int i = 0; i < Load_visible_vertices_NUM; i++) {
+		f >> Load_visible_vertices(i, 0) >> Load_visible_vertices(i, 1) >> Load_visible_vertices(i, 2);
+	}
+	f.close();
+	printf("Load visible vertices succeed!!!\n");
 }
 
 void HandModel::set_one_rotation(Pose pose, int index)
@@ -908,9 +938,9 @@ void HandModel::Compute_normal_And_visibel_vertices()
 		//            A
 		//          /  \
 		//         B ¡ª C
-		A << Vectices(FaceIndex(i, 0), 0), Vectices(FaceIndex(i, 0), 1), Vectices(FaceIndex(i, 0), 2);
-		B << Vectices(FaceIndex(i, 1), 0), Vectices(FaceIndex(i, 1), 1), Vectices(FaceIndex(i, 1), 2);
-		C << Vectices(FaceIndex(i, 2), 0), Vectices(FaceIndex(i, 2), 1), Vectices(FaceIndex(i, 2), 2);
+		A << vertices_update_(FaceIndex(i, 0), 0), vertices_update_(FaceIndex(i, 0), 1), vertices_update_(FaceIndex(i, 0), 2);
+		B << vertices_update_(FaceIndex(i, 1), 0), vertices_update_(FaceIndex(i, 1), 1), vertices_update_(FaceIndex(i, 1), 2);
+		C << vertices_update_(FaceIndex(i, 2), 0), vertices_update_(FaceIndex(i, 2), 1), vertices_update_(FaceIndex(i, 2), 2);
 
 		BC << C - B;
 		BA << A - B;
@@ -939,7 +969,7 @@ void HandModel::Compute_normal_And_visibel_vertices()
 
 		if (-(Vertices_normal(i, 2)) >= 0)
 		{
-			Vector3f visible_v(Vectices(i, 0), Vectices(i, 1),Vectices(i, 2));
+			Vector3f visible_v(vertices_update_(i, 0), vertices_update_(i, 1), vertices_update_(i, 2));
 			Visible_vertices.push_back(visible_v);
 			Visible_vertices_index.push_back(i);
 		}

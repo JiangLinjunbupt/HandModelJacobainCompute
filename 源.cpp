@@ -2,6 +2,9 @@
 #include"HandModel.h"
 #include <tchar.h>
 #include<ctime>
+#include <pcl/point_types.h>
+#include <pcl/filters/voxel_grid.h>
+#include <pcl/kdtree/kdtree_flann.h>
 
 struct Control {
 	int x;
@@ -32,7 +35,49 @@ TCHAR szName[] = TEXT("Global\\MyFileMappingObject");    //Ö¸ÏòÍ¬Ò»¿é¹²ÏíÄÚ´æµÄÃ
 float *GetSharedMemeryPtr;
 float *GetGloveData = new float[27];
 
+pcl::PointCloud<pcl::PointXYZ>::Ptr Handmodel_visible_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+pcl::PointCloud<pcl::PointXYZ>::Ptr Kinect_visible_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+std::vector<int> cloud_correspond;
+void load_handmodel_visible_cloud(pcl::PointCloud<pcl::PointXYZ>& cloud, HandModel &hm)
+{
+	cloud.points.clear();
+	for (int i = 0; i < hm.Visible_vertices.size(); i++)
+	{
+		pcl::PointXYZ p;
+		p.x = hm.Visible_vertices[i](0);
+		p.y = hm.Visible_vertices[i](1);
+		p.z = hm.Visible_vertices[i](2);
+		cloud.points.push_back(p);
+	}
+}
+void load_visible_cloud(pcl::PointCloud<pcl::PointXYZ>& cloud, HandModel &hm)
+{
+	cloud.points.clear();
+	for (int i = 0; i < hm.Load_visible_vertices_NUM; i++)
+	{
+		pcl::PointXYZ p;
+		p.x = hm.Load_visible_vertices(i,0);
+		p.y = hm.Load_visible_vertices(i,1);
+		p.z = hm.Load_visible_vertices(i,2);
+		cloud.points.push_back(p);
+	}
+}
+void find_correspondences(std::vector<int> & correspondences_out)
+{
+	correspondences_out.resize(Kinect_visible_cloud->points.size());
 
+	pcl::KdTreeFLANN<pcl::PointXYZ> search_kdtree;
+	search_kdtree.setInputCloud(Handmodel_visible_cloud);
+
+	const int k = 1;
+	std::vector<int> k_indices(k);
+	std::vector<float> k_squared_distances(k);
+	for (size_t i = 0; i < Kinect_visible_cloud->points.size(); ++i)
+	{
+		search_kdtree.nearestKSearch(*Kinect_visible_cloud, i, k, k_indices, k_squared_distances);
+		correspondences_out[i] = k_indices[0];
+	}
+}
 #pragma region OpenGL
 /* executed when a regular key is pressed */
 void keyboardDown(unsigned char key, int x, int y) {
@@ -167,6 +212,24 @@ void draw() {
 	}
 	glEnd();
 
+	glPointSize(2);
+	glBegin(GL_POINTS);
+	glColor3d(1.0, 1.0, 0.0);
+	for (int i = 0; i < handmodel->Load_visible_vertices.size(); i++) {
+		glVertex3d(handmodel->Load_visible_vertices(i,0), handmodel->Load_visible_vertices(i,1), handmodel->Load_visible_vertices(i,2));
+	}
+	glEnd();
+
+
+	glLineWidth(2);
+	glColor3f(1.0, 1.0, 1);
+	glBegin(GL_LINES);
+	for (int i = 0; i < cloud_correspond.size(); i++)
+	{
+		glVertex3d(Kinect_visible_cloud->points[i].x, Kinect_visible_cloud->points[i].y, Kinect_visible_cloud->points[i].z);
+		glVertex3f(Handmodel_visible_cloud->points[cloud_correspond[i]].x, Handmodel_visible_cloud->points[cloud_correspond[i]].y, Handmodel_visible_cloud->points[cloud_correspond[i]].z);
+	}
+	glEnd();
 
 	glFlush();
 	glutSwapBuffers();
@@ -204,7 +267,7 @@ void idle() {
 	//GetGloveData[25] = 10;
 	//GetGloveData[26] = -50;
 
-	handmodel->Updata(GetGloveData);
+	//handmodel->Updata(GetGloveData);
 
 
 	End = clock();//½áÊø¼ÆÊ±
@@ -241,6 +304,10 @@ void initGL(int width, int height) {
 
 int main(int argc, char** argv)
 {
+
+	load_handmodel_visible_cloud(*Handmodel_visible_cloud, *handmodel);
+	load_visible_cloud(*Kinect_visible_cloud, *handmodel);
+	find_correspondences(cloud_correspond);
 
 #pragma region SharedMemery
 	hMapFile = CreateFileMapping(

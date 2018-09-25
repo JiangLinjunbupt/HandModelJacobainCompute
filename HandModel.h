@@ -5,6 +5,11 @@
 #include<vector>
 #define PI 3.1415926
 
+#include <pcl/point_types.h>
+#include <pcl/filters/voxel_grid.h>
+#include <pcl/kdtree/kdtree_flann.h>
+#include <pcl/kdtree/kdtree_flann.h>
+
 enum dof_type
 {
 	x_axis_rotate, y_axis_rotate, z_axis_rotate,
@@ -74,10 +79,12 @@ public:
 	Matrix_Nx3 Target_joints;
 	Matrix_MxN Weights;
 
+	Matrix_Nx3 Load_visible_vertices;
+
 	int NumofJoints;
 	int NumofVertices;
 	int NumofFaces;
-
+	int Load_visible_vertices_NUM;
 	int NumberofParams;
 
 	float *Params;
@@ -132,6 +139,7 @@ private:
 	void load_target_vertices();
 	void save_target_joints();
 	void load_target_joints();
-
+	void load_glove_data();
+	void load_visible_vertices();
 	void Compute_normal_And_visibel_vertices();
 };
