@@ -2,9 +2,6 @@
 #include"HandModel.h"
 #include <tchar.h>
 #include<ctime>
-#include <pcl/point_types.h>
-#include <pcl/filters/voxel_grid.h>
-#include <pcl/kdtree/kdtree_flann.h>
 
 struct Control {
 	int x;
@@ -23,7 +20,7 @@ struct Control {
 };
 Control control;
 HandModel *handmodel = new HandModel();
-
+bool show_mesh = true;
 clock_t  Begin, End;
 double duration;
 
@@ -33,58 +30,43 @@ LPCTSTR pBuf;
 #define BUF_SIZE 1024
 TCHAR szName[] = TEXT("Global\\MyFileMappingObject");    //指向同一块共享内存的名字
 float *GetSharedMemeryPtr;
-float *GetGloveData = new float[27];
+float *GetGloveData = new float[26];
 
-pcl::PointCloud<pcl::PointXYZ>::Ptr Handmodel_visible_cloud(new pcl::PointCloud<pcl::PointXYZ>);
-pcl::PointCloud<pcl::PointXYZ>::Ptr Kinect_visible_cloud(new pcl::PointCloud<pcl::PointXYZ>);
-std::vector<int> cloud_correspond;
-void load_handmodel_visible_cloud(pcl::PointCloud<pcl::PointXYZ>& cloud, HandModel &hm)
-{
-	cloud.points.clear();
-	for (int i = 0; i < hm.Visible_vertices.size(); i++)
-	{
-		pcl::PointXYZ p;
-		p.x = hm.Visible_vertices[i](0);
-		p.y = hm.Visible_vertices[i](1);
-		p.z = hm.Visible_vertices[i](2);
-		cloud.points.push_back(p);
-	}
-}
-void load_visible_cloud(pcl::PointCloud<pcl::PointXYZ>& cloud, HandModel &hm)
-{
-	cloud.points.clear();
-	for (int i = 0; i < hm.Load_visible_vertices_NUM; i++)
-	{
-		pcl::PointXYZ p;
-		p.x = hm.Load_visible_vertices(i,0);
-		p.y = hm.Load_visible_vertices(i,1);
-		p.z = hm.Load_visible_vertices(i,2);
-		cloud.points.push_back(p);
-	}
-}
-void find_correspondences(std::vector<int> & correspondences_out)
-{
-	correspondences_out.resize(Kinect_visible_cloud->points.size());
+bool move_to_target = false;
 
-	pcl::KdTreeFLANN<pcl::PointXYZ> search_kdtree;
-	search_kdtree.setInputCloud(Handmodel_visible_cloud);
-
-	const int k = 1;
-	std::vector<int> k_indices(k);
-	std::vector<float> k_squared_distances(k);
-	for (size_t i = 0; i < Kinect_visible_cloud->points.size(); ++i)
-	{
-		search_kdtree.nearestKSearch(*Kinect_visible_cloud, i, k, k_indices, k_squared_distances);
-		correspondences_out[i] = k_indices[0];
-	}
-}
 #pragma region OpenGL
+void light() {
+	glEnable(GL_LIGHTING);
+	glEnable(GL_NORMALIZE);
+	// 定义太阳光源，它是一种白色的光源  
+	GLfloat sun_light_position[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+	GLfloat sun_light_ambient[] = { 0.25f, 0.25f, 0.15f, 1.0f };
+	GLfloat sun_light_diffuse[] = { 0.7f, 0.7f, 0.55f, 1.0f };
+	GLfloat sun_light_specular[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+
+	glLightfv(GL_LIGHT0, GL_POSITION, sun_light_position); //指定第0号光源的位置   
+	glLightfv(GL_LIGHT0, GL_AMBIENT, sun_light_ambient); //GL_AMBIENT表示各种光线照射到该材质上，  
+														 //经过很多次反射后最终遗留在环境中的光线强度（颜色）  
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, sun_light_diffuse); //漫反射后~~  
+	glLightfv(GL_LIGHT0, GL_SPECULAR, sun_light_specular);//镜面反射后~~~  
+
+	glEnable(GL_LIGHT0); //使用第0号光照   
+}
 /* executed when a regular key is pressed */
 void keyboardDown(unsigned char key, int x, int y) {
 
 	switch (key) {
 	case  27:   // ESC
 		exit(0);
+	case 'm':
+		show_mesh = !show_mesh;
+		break;
+	case 's':
+		handmodel->save_target_joints();
+		break;
+	case 'b':
+		move_to_target = !move_to_target;
+		break;
 	}
 }
 
@@ -109,8 +91,177 @@ void mouseClick(int button, int state, int x, int y) {
 	control.y = y;
 }
 
-/* executed when the mouse moves to position ('x', 'y') */
+void mouseMotion(int x, int y) {
+	control.rotx = (x - control.x)*0.05f;
+	control.roty = (y - control.y)*0.05f;
+
+	//cout<< control.rotx <<" " << control.roty << endl;
+	glutPostRedisplay();
+}
+
 /* render the scene */
+
+void draw_mesh()
+{
+	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHT0);
+	{
+		glColor3f(0.4f, 0.8f, 0.3f);
+		glBegin(GL_TRIANGLES);
+		for (int i = 0; i < handmodel->NumofFaces; ++i)
+		{
+
+			glNormal3f(handmodel->Face_normal[i](0), handmodel->Face_normal[i](1), handmodel->Face_normal[i](2));
+
+			glVertex3f(handmodel->vertices_update_(handmodel->FaceIndex(i, 0), 0), handmodel->vertices_update_(handmodel->FaceIndex(i, 0), 1), handmodel->vertices_update_(handmodel->FaceIndex(i, 0), 2));
+			glVertex3f(handmodel->vertices_update_(handmodel->FaceIndex(i, 1), 0), handmodel->vertices_update_(handmodel->FaceIndex(i, 1), 1), handmodel->vertices_update_(handmodel->FaceIndex(i, 1), 2));
+			glVertex3f(handmodel->vertices_update_(handmodel->FaceIndex(i, 2), 0), handmodel->vertices_update_(handmodel->FaceIndex(i, 2), 1), handmodel->vertices_update_(handmodel->FaceIndex(i, 2), 2));
+		}
+		glEnd();
+	}
+}
+
+void draw_vertex()
+{
+	glDisable(GL_LIGHT0);
+	glDisable(GL_LIGHTING);
+	glPointSize(2);
+	glBegin(GL_POINTS);
+	glColor3d(1.0, 1.0, 0.0);
+	for (int i = 0; i < handmodel->NumofVertices; ++i) {
+		glVertex3d(handmodel->vertices_update_(i, 0), handmodel->vertices_update_(i, 1), handmodel->vertices_update_(i, 2));
+	}
+	glEnd();
+}
+
+void draw_skeleton()
+{
+	glDisable(GL_LIGHT0);
+	glDisable(GL_LIGHTING);
+	for (int i = 0; i < handmodel->NumofJoints; ++i) {
+		//画点开始 
+		glColor3f(1.0, 0.0, 0.0);
+		glPushMatrix();
+		glTranslatef(handmodel->Joints[i].CorrespondingPosition(0), handmodel->Joints[i].CorrespondingPosition(1), handmodel->Joints[i].CorrespondingPosition(2));
+		glutSolidSphere(3, 31, 10);
+		glPopMatrix();
+		//画点结束，使用push和popmatrix是因为保证每个关节点的偏移都是相对于全局坐标中心点做的变换。
+		int parent_joint_index = handmodel->Joints[i].parent_joint_index;
+		//画线开始  //不画wrist到arm的那条线
+		if (parent_joint_index != -1) {
+			glLineWidth(5);
+			glColor3f(0.0, 1.0, 0);
+			glBegin(GL_LINES);
+			glVertex3f(handmodel->Joints[i].CorrespondingPosition(0), handmodel->Joints[i].CorrespondingPosition(1), handmodel->Joints[i].CorrespondingPosition(2));
+			glVertex3f(handmodel->Joints[parent_joint_index].CorrespondingPosition(0), handmodel->Joints[parent_joint_index].CorrespondingPosition(1), handmodel->Joints[parent_joint_index].CorrespondingPosition(2));
+			glEnd();
+		}
+	}
+}
+
+void draw_Coordinate()
+{
+	glDisable(GL_LIGHT0);
+	glDisable(GL_LIGHTING);
+	//x
+	glLineWidth(5);
+	glColor3f(1.0, 0.0, 0.0);
+	glBegin(GL_LINES);
+	glVertex3f(0, 0, 0);
+	glVertex3f(100, 0, 0);
+	glEnd();
+
+	//y
+	glLineWidth(5);
+	glColor3f(0.0, 1.0, 0.0);
+	glBegin(GL_LINES);
+	glVertex3f(0, 0, 0);
+	glVertex3f(0, 100, 0);
+	glEnd();
+
+	//z
+	glLineWidth(5);
+	glColor3f(0.0, 0.0, 1.0);
+	glBegin(GL_LINES);
+	glVertex3f(0, 0, 0);
+	glVertex3f(0, 0, 100);
+	glEnd();
+}
+
+void draw_joint_local_coordinate(int index)
+{
+	glDisable(GL_LIGHT0);
+	glDisable(GL_LIGHTING);
+	int scale = 30;
+
+	Vector4 x = handmodel->Joints[index].CorrespondingAxis[0] - handmodel->Joints[index].CorrespondingPosition;
+	glLineWidth(2);
+	glColor3f(1.0, 0.0, 0);
+	glBegin(GL_LINES);
+	glVertex3f(handmodel->Joints[index].CorrespondingPosition(0), handmodel->Joints[index].CorrespondingPosition(1), handmodel->Joints[index].CorrespondingPosition(2));
+	glVertex3f(handmodel->Joints[index].CorrespondingPosition(0) + scale*x(0), handmodel->Joints[index].CorrespondingPosition(1) + scale * x(1), handmodel->Joints[index].CorrespondingPosition(2) + scale * x(2));
+	glEnd();
+
+
+	Vector4 y = handmodel->Joints[index].CorrespondingAxis[1] - handmodel->Joints[index].CorrespondingPosition;
+	glLineWidth(2);
+	glColor3f(0.0, 1.0, 0);
+	glBegin(GL_LINES);
+	glVertex3f(handmodel->Joints[index].CorrespondingPosition(0), handmodel->Joints[index].CorrespondingPosition(1), handmodel->Joints[index].CorrespondingPosition(2));
+	glVertex3f(handmodel->Joints[index].CorrespondingPosition(0) + scale * y(0), handmodel->Joints[index].CorrespondingPosition(1) + scale * y(1), handmodel->Joints[index].CorrespondingPosition(2) + scale * y(2));
+	glEnd();
+
+	Vector4 z = handmodel->Joints[index].CorrespondingAxis[2] - handmodel->Joints[index].CorrespondingPosition;
+	glLineWidth(2);
+	glColor3f(0.0, 0.0, 1.0);
+	glBegin(GL_LINES);
+	glVertex3f(handmodel->Joints[index].CorrespondingPosition(0), handmodel->Joints[index].CorrespondingPosition(1), handmodel->Joints[index].CorrespondingPosition(2));
+	glVertex3f(handmodel->Joints[index].CorrespondingPosition(0) + scale * z(0), handmodel->Joints[index].CorrespondingPosition(1) + scale * z(1), handmodel->Joints[index].CorrespondingPosition(2) + scale * z(2));
+	glEnd();
+}
+
+void draw_ALL_joint_coordinate()
+{
+	for (int i = 0; i<21; ++i)  	draw_joint_local_coordinate(i);
+}
+
+void draw_Hand_visible_vertex()
+{
+	glDisable(GL_LIGHT0);
+	glDisable(GL_LIGHTING);
+	glPointSize(2);
+	glBegin(GL_POINTS);
+	glColor3d(1.0, 0.0, 0.0);
+	for (int i = 0; i < handmodel->Visible_vertices.size(); i++) {
+		glVertex3d(handmodel->Visible_vertices[i](0), handmodel->Visible_vertices[i](1), handmodel->Visible_vertices[i](2));
+	}
+	glEnd();
+}
+
+void draw_target_difference()
+{
+	glDisable(GL_LIGHT0);
+	glDisable(GL_LIGHTING);
+	for (int i = 0; i < handmodel->NumofJoints; ++i) {
+		//画点开始 
+		glColor3f(0.0, 1.0, 0.0);
+		glPushMatrix();
+		glTranslatef(handmodel->Target_joints(i, 0), handmodel->Target_joints(i, 1), handmodel->Target_joints(i, 2));
+		glutSolidSphere(3, 31, 10);
+		glPopMatrix();
+		//画点结束，使用push和popmatrix是因为保证每个关节点的偏移都是相对于全局坐标中心点做的变换。
+
+		//画线开始  //不画wrist到arm的那条线
+
+		glLineWidth(5);
+		glColor3f(1.0, 1.0, 1.0);
+		glBegin(GL_LINES);
+		glVertex3f(handmodel->Joints[i].CorrespondingPosition(0), handmodel->Joints[i].CorrespondingPosition(1), handmodel->Joints[i].CorrespondingPosition(2));
+		glVertex3f(handmodel->Target_joints(i, 0), handmodel->Target_joints(i, 1), handmodel->Target_joints(i, 2));
+		glEnd();
+
+	}
+}
 void draw() {
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -127,164 +278,43 @@ void draw() {
 	//cout<< x <<" "<< y <<" " << z<<endl;
 	gluLookAt(x + control.gx, y + control.gy, z + control.gz, control.gx, control.gy, control.gz, 0.0, 1.0, 0.0);//个人理解最开始是看向-z的，之后的角度是在global中心上叠加的，所以要加
 
+	if (show_mesh)  draw_mesh();
+	//draw_vertex();
+	draw_skeleton();
+	draw_Coordinate();
+	//draw_ALL_joint_coordinate();
 
+	draw_target_difference();
 
-	///* render the scene here */
-	//{
-	//	glPointSize(2);
-	//	glBegin(GL_POINTS);
-	//	glColor3d(1.0, 0.0, 0.0);
-	//	for (int i = 0; i < handmodel->NumofVertices; i++) {
-	//		glVertex3d(handmodel->vertices_update_(i, 0), handmodel->vertices_update_(i, 1), handmodel->vertices_update_(i, 2));
-	//	}
-	//	glEnd();
-
-
-	//	glPointSize(2);
-	//	glBegin(GL_POINTS);
-	//	glColor3d(0.0, 1.0, 0.0);
-	//	for (int i = 0; i < handmodel->NumofVertices; i++) {
-	//		glVertex3d(handmodel->Target_vertices(i, 0), handmodel->Target_vertices(i, 1), handmodel->Target_vertices(i, 2));
-	//	}
-	//	glEnd();
-
-
-	//	for (int i = 0; i < handmodel->NumofVertices; i = i+10) {
-	//		glVertex3d(handmodel->Target_vertices(i, 0), handmodel->Target_vertices(i, 1), handmodel->Target_vertices(i, 2));
-	//		glLineWidth(1);
-	//		glColor3f(1.0, 1.0, 1.0);
-	//		glBegin(GL_LINES);
-	//		glVertex3d(handmodel->Target_vertices(i, 0), handmodel->Target_vertices(i, 1), handmodel->Target_vertices(i, 2));
-	//		glVertex3d(handmodel->vertices_update_(i, 0), handmodel->vertices_update_(i, 1), handmodel->vertices_update_(i, 2));
-	//		glEnd();
-	//	}
-	//}
-
-
-	//for (int i = 0; i < handmodel->NumofJoints; i++) {
-	//	//画点开始 
-	//	glColor3f(1.0, 0.0, 0.0);
-	//	glPushMatrix();
-	//	glTranslatef(handmodel->Joints[i].CorrespondingPosition(0), handmodel->Joints[i].CorrespondingPosition(1), handmodel->Joints[i].CorrespondingPosition(2));
-	//	glutSolidSphere(5, 31, 10);
-	//	glPopMatrix();
-
-	//	//画点结束，使用push和popmatrix是因为保证每个关节点的偏移都是相对于全局坐标中心点做的变换。
-
-	//	int parent_joint_index = handmodel->Joints[i].parent_joint_index;
-	//	//画线开始  //不画wrist到arm的那条线
-	//	if (parent_joint_index != -1) {
-	//		glLineWidth(5);
-	//		glColor3f(0.0, 1.0, 0);
-	//		glBegin(GL_LINES);
-	//		glVertex3f(handmodel->Joints[i].CorrespondingPosition(0), handmodel->Joints[i].CorrespondingPosition(1), handmodel->Joints[i].CorrespondingPosition(2));
-	//		glVertex3f(handmodel->Joints[parent_joint_index].CorrespondingPosition(0), handmodel->Joints[parent_joint_index].CorrespondingPosition(1), handmodel->Joints[parent_joint_index].CorrespondingPosition(2));
-	//		glEnd();
-	//	}
-
-	//	//glLineWidth(2);
-	//	//glColor3f(1.0, 1.0, 1);
-	//	//glBegin(GL_LINES);
-	//	//glVertex3f(handmodel->Joints[i].CorrespondingPosition(0), handmodel->Joints[i].CorrespondingPosition(1), handmodel->Joints[i].CorrespondingPosition(2));
-	//	//glVertex3f(handmodel->Target_joints(i, 0), handmodel->Target_joints(i, 1), handmodel->Target_joints(i, 2));
-	//	//glEnd();
-
-	//	//画线结束
-	//}
-
-
-	//for (int i = 0; i < handmodel->NumofJoints; i++) {
-	//	//画点开始 
-	//	glColor3f(0.0, 1.0, 0.0);
-	//	glPushMatrix();
-	//	glTranslatef(handmodel->Target_joints(i,0), handmodel->Target_joints(i,1), handmodel->Target_joints(i,2));
-	//	glutSolidSphere(5, 31, 10);
-	//	glPopMatrix();
-
-	//	//画点结束，使用push和popmatrix是因为保证每个关节点的偏移都是相对于全局坐标中心点做的变换。
-	//}
-
-	glPointSize(2);
-	glBegin(GL_POINTS);
-	glColor3d(1.0, 0.0, 0.0);
-	for (int i = 0; i < handmodel->Visible_vertices.size(); i++) {
-		glVertex3d(handmodel->Visible_vertices[i](0), handmodel->Visible_vertices[i](1), handmodel->Visible_vertices[i](2));
-	}
-	glEnd();
-
-	glPointSize(2);
-	glBegin(GL_POINTS);
-	glColor3d(1.0, 1.0, 0.0);
-	for (int i = 0; i < handmodel->Load_visible_vertices.size(); i++) {
-		glVertex3d(handmodel->Load_visible_vertices(i,0), handmodel->Load_visible_vertices(i,1), handmodel->Load_visible_vertices(i,2));
-	}
-	glEnd();
-
-
-	glLineWidth(2);
-	glColor3f(1.0, 1.0, 1);
-	glBegin(GL_LINES);
-	for (int i = 0; i < cloud_correspond.size(); i++)
-	{
-		glVertex3d(Kinect_visible_cloud->points[i].x, Kinect_visible_cloud->points[i].y, Kinect_visible_cloud->points[i].z);
-		glVertex3f(Handmodel_visible_cloud->points[cloud_correspond[i]].x, Handmodel_visible_cloud->points[cloud_correspond[i]].y, Handmodel_visible_cloud->points[cloud_correspond[i]].z);
-	}
-	glEnd();
 
 	glFlush();
 	glutSwapBuffers();
-}
-
-
-void mouseMotion(int x, int y) {
-	control.rotx = (x - control.x)*0.05f;
-	control.roty = (y - control.y)*0.05f;
-
-	//cout<< control.rotx <<" " << control.roty << endl;
-	glutPostRedisplay();
 }
 
 /* executed when program is idle */
 void idle() {
 
 	Begin = clock();//开始计时
-	for (int i = 0; i < 27; i++)
+
+	if (!move_to_target)
 	{
-		GetGloveData[i] = GetSharedMemeryPtr[i];
+		for (int i = 0; i < 26; ++i)
+		{
+			GetGloveData[i] = GetSharedMemeryPtr[i];
+		}
+
+		handmodel->Updata(GetGloveData);
 	}
-	GetGloveData[16] = -GetGloveData[16];
-	GetGloveData[17] = -GetGloveData[17];
-	GetGloveData[18] = -GetGloveData[18];
-
-
-	//GetGloveData[9] = 90;
-	//GetGloveData[0] = 90;
-	//GetGloveData[2] = 60;
-	//GetGloveData[15] = 30;
-	//GetGloveData[16] = -30;
-	//GetGloveData[17] = -50;
-	//GetGloveData[24] = 20;
-	//GetGloveData[25] = 10;
-	//GetGloveData[26] = -50;
-
-	//handmodel->Updata(GetGloveData);
-
+	else
+	{
+		handmodel->MoveToJointTarget();
+	}
 
 	End = clock();//结束计时
 	duration = double(End - Begin) / CLK_TCK;//duration就是运行函数所打的
 
-	std::cout << "time is : " << duration*1000 << std::endl;
+	std::cout << "time is : " << duration * 1000 << std::endl;
 
-	//if (!handmodel->Solved)
-	//{
-	//	handmodel->MoveToVerticeTarget();
-
-	//	for (int i = 0; i < handmodel->NumberofParams; i++)
-	//	{
-	//		std::cout << handmodel->Params[i] << "  ";
-	//	}
-	//	std::cout << std::endl << std::endl;
-	//}
 	glutPostRedisplay();
 }
 
@@ -298,6 +328,7 @@ void initGL(int width, int height) {
 
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
+	light();
 }
 
 #pragma endregion 
@@ -305,9 +336,6 @@ void initGL(int width, int height) {
 int main(int argc, char** argv)
 {
 
-	load_handmodel_visible_cloud(*Handmodel_visible_cloud, *handmodel);
-	load_visible_cloud(*Kinect_visible_cloud, *handmodel);
-	find_correspondences(cloud_correspond);
 
 #pragma region SharedMemery
 	hMapFile = CreateFileMapping(
