@@ -62,6 +62,15 @@ public:
 	}
 };
 
+struct Collision
+{
+	Eigen::Vector4f init_Position;    //局部坐标系
+	Eigen::Vector4f updata_Position;    //世界坐标系
+
+	float radius;
+	int joint_index;
+};
+
 class HandModel
 {
 public:
@@ -90,6 +99,7 @@ public:
 	int* ParamsLowerBound;
 
 	Vector4 GlobalPosition;
+	vector<Collision> Collision_sphere;
 
 	HandModel();
 	~HandModel() { delete ParamsLowerBound; delete ParamsUpperBound; delete Params; delete Joints; }
@@ -123,7 +133,9 @@ private:
 	void Updata_Vertics();
 	void Compute_normal_And_visibel_vertices();
 
-
+	//collision
+	void set_collosion();
+	void updata_collosion();
 private:
 	void normalize(float axis[3]) {
 		float sum = sqrt(axis[0] * axis[0] + axis[1] * axis[1] + axis[2] * axis[2]);

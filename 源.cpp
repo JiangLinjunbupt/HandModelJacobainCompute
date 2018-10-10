@@ -120,7 +120,34 @@ void draw_mesh()
 		glEnd();
 	}
 }
+void draw_WireHand()
+{
+	glDisable(GL_LIGHT0);
+	glDisable(GL_LIGHTING);
+	for (int i = 0; i < handmodel->NumofFaces; ++i)
+	{
+		glLineWidth(1);
+		glColor3f(1.0, 0.0, 0.0);
+		glBegin(GL_LINES);
+		glVertex3f(handmodel->vertices_update_(handmodel->FaceIndex(i, 0), 0), handmodel->vertices_update_(handmodel->FaceIndex(i, 0), 1), handmodel->vertices_update_(handmodel->FaceIndex(i, 0), 2));
+		glVertex3f(handmodel->vertices_update_(handmodel->FaceIndex(i, 1), 0), handmodel->vertices_update_(handmodel->FaceIndex(i, 1), 1), handmodel->vertices_update_(handmodel->FaceIndex(i, 1), 2));
+		glEnd();
 
+		glLineWidth(1);
+		glColor3f(1.0, 0.0, 0.0);
+		glBegin(GL_LINES);
+		glVertex3f(handmodel->vertices_update_(handmodel->FaceIndex(i, 0), 0), handmodel->vertices_update_(handmodel->FaceIndex(i, 0), 1), handmodel->vertices_update_(handmodel->FaceIndex(i, 0), 2));
+		glVertex3f(handmodel->vertices_update_(handmodel->FaceIndex(i, 2), 0), handmodel->vertices_update_(handmodel->FaceIndex(i, 2), 1), handmodel->vertices_update_(handmodel->FaceIndex(i, 2), 2));
+		glEnd();
+
+		glLineWidth(1);
+		glColor3f(1.0, 0.0, 0.0);
+		glBegin(GL_LINES);
+		glVertex3f(handmodel->vertices_update_(handmodel->FaceIndex(i, 1), 0), handmodel->vertices_update_(handmodel->FaceIndex(i, 1), 1), handmodel->vertices_update_(handmodel->FaceIndex(i, 1), 2));
+		glVertex3f(handmodel->vertices_update_(handmodel->FaceIndex(i, 2), 0), handmodel->vertices_update_(handmodel->FaceIndex(i, 2), 1), handmodel->vertices_update_(handmodel->FaceIndex(i, 2), 2));
+		glEnd();
+	}
+}
 void draw_vertex()
 {
 	glDisable(GL_LIGHT0);
@@ -262,6 +289,20 @@ void draw_target_difference()
 
 	}
 }
+
+void draw_Collision()
+{
+	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHT0);
+	for (int i = 0; i < handmodel->Collision_sphere.size(); i++)
+	{
+		glColor3f(1.0, 0.0, 0.0);
+		glPushMatrix();
+		glTranslatef(handmodel->Collision_sphere[i].updata_Position(0), handmodel->Collision_sphere[i].updata_Position(1), handmodel->Collision_sphere[i].updata_Position(2));
+		glutSolidSphere(handmodel->Collision_sphere[i].radius, 10, 10);
+		glPopMatrix();
+	}
+}
 void draw() {
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -269,9 +310,9 @@ void draw() {
 	gluPerspective(180, 1.5, -1000, 1000);
 	glLoadIdentity();
 	control.gx = handmodel->GlobalPosition(0);
-	control.gy = handmodel->GlobalPosition(1);
+	control.gy = handmodel->GlobalPosition(1) + 50;
 	control.gz = handmodel->GlobalPosition(2);
-	double r = 200;
+	double r = 160;
 	double x = r*sin(control.roty)*cos(control.rotx);
 	double y = r*sin(control.roty)*sin(control.rotx);
 	double z = r*cos(control.roty);
@@ -279,13 +320,15 @@ void draw() {
 	gluLookAt(x + control.gx, y + control.gy, z + control.gz, control.gx, control.gy, control.gz, 0.0, 1.0, 0.0);//个人理解最开始是看向-z的，之后的角度是在global中心上叠加的，所以要加
 
 	if (show_mesh)  draw_mesh();
+	else draw_WireHand();
+
 	//draw_vertex();
 	draw_skeleton();
 	draw_Coordinate();
-	//draw_ALL_joint_coordinate();
-
-	draw_target_difference();
-
+	draw_ALL_joint_coordinate();
+	draw_Collision();
+	//draw_target_difference();
+	//draw_Hand_visible_vertex();
 
 	glFlush();
 	glutSwapBuffers();
@@ -303,13 +346,15 @@ void idle() {
 			GetGloveData[i] = GetSharedMemeryPtr[i];
 		}
 
+		cout << GetGloveData[23] << endl;
+
 		handmodel->Updata(GetGloveData);
 	}
 	else
 	{
 		handmodel->MoveToJointTarget();
 	}
-
+	
 	End = clock();//结束计时
 	duration = double(End - Begin) / CLK_TCK;//duration就是运行函数所打的
 

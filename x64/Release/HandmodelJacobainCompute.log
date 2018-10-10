@@ -1,8 +1,8 @@
-﻿  源.cpp
+﻿  HandModel.cpp
   正在生成代码
-  229 of 7403 functions ( 3.1%) were compiled, the rest were copied from previous compilation.
-    0 functions were new in current compilation
-    58 functions had inline decision re-evaluated but remain unchanged
+  241 of 7575 functions ( 3.2%) were compiled, the rest were copied from previous compilation.
+    4 functions were new in current compilation
+    43 functions had inline decision re-evaluated but remain unchanged
   已完成代码的生成
   HandmodelJacobainCompute.vcxproj -> O:\vsstudioProjects\HandmodelJacobainCompute\x64\Release\HandmodelJacobainCompute.exe
   HandmodelJacobainCompute.vcxproj -> O:\vsstudioProjects\HandmodelJacobainCompute\x64\Release\HandmodelJacobainCompute.pdb (Full PDB)

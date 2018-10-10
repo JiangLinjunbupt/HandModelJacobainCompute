@@ -5,6 +5,7 @@ void HandModel::load_faces(char* filename)
 	f.open(filename, std::ios::in);
 	f >> NumofFaces;
 	FaceIndex = Eigen::MatrixXi::Zero(NumofFaces, 3);
+	Face_normal.resize(NumofFaces);
 	for (int i = 0; i < NumofFaces; ++i) {
 		f >> FaceIndex(i, 0) >> FaceIndex(i, 1) >> FaceIndex(i, 2);
 	}
@@ -381,12 +382,324 @@ HandModel::HandModel()
 	Joints_jacobian = Eigen::MatrixXf::Zero(NumofJoints * 3, NumberofParams);
 	Solved = false;
 
-
+	set_collosion();
 	compute_local_coordinate();
 	compute_parent_child_transform();
 	Updata(Params);
 }
 
+void HandModel::set_collosion()
+{
+	Collision_sphere.clear();
+	//index
+	{
+		//index_low
+		{
+			Collision index_Low_0;
+			index_Low_0.init_Position << 0, -2, -0.8f, 1;
+			index_Low_0.radius = 9.0f;
+			index_Low_0.joint_index = 2;
+			Collision_sphere.push_back(index_Low_0);
+
+			Collision index_low_1;
+			index_low_1.init_Position << 11, -2, -0.8f, 1;
+			index_low_1.radius = 8.5f;
+			index_low_1.joint_index = 2;
+			Collision_sphere.push_back(index_low_1);
+
+			Collision index_low_2;
+			index_low_2.init_Position << 22, -1, -0.8f, 1;
+			index_low_2.radius = 8.5f;
+			index_low_2.joint_index = 2;
+			Collision_sphere.push_back(index_low_2);
+		}
+
+		//index_middle
+		{
+			Collision index_middle_0;
+			index_middle_0.init_Position << 0, -1.0f, -0.8f, 1;
+			index_middle_0.radius = 8.3f;
+			index_middle_0.joint_index = 3;
+			Collision_sphere.push_back(index_middle_0);
+
+			Collision index_middle_1;
+			index_middle_1.init_Position << 10, -1.0f, -0.8f, 1;
+			index_middle_1.radius = 7.5f;
+			index_middle_1.joint_index = 3;
+			Collision_sphere.push_back(index_middle_1);
+
+			Collision index_middle_2;
+			index_middle_2.init_Position << 20, -1.0f, -0.8f, 1;
+			index_middle_2.radius = 7.0f;
+			index_middle_2.joint_index = 3;
+			Collision_sphere.push_back(index_middle_2);
+		}
+
+		//index_top
+		{
+			Collision index_top_0;
+			index_top_0.init_Position << 0, -1.0f, -0.8f, 1;
+			index_top_0.radius = 6.8f;
+			index_top_0.joint_index = 4;
+			Collision_sphere.push_back(index_top_0);
+
+			Collision index_top_1;
+			index_top_1.init_Position << 10, -1.0f, -1.0f, 1;
+			index_top_1.radius = 4.5f;
+			index_top_1.joint_index = 4;
+			Collision_sphere.push_back(index_top_1);
+		}
+	}
+
+	//Middle
+	{
+		//Middle_low
+		{
+			Collision Middle_low_0;
+			Middle_low_0.init_Position << 0, -2, -0.3f, 1;
+			Middle_low_0.radius = 9.0f;
+			Middle_low_0.joint_index = 6;
+			Collision_sphere.push_back(Middle_low_0);
+
+			Collision Middle_low_1;
+			Middle_low_1.init_Position << 12, -2, -0.3f, 1;
+			Middle_low_1.radius = 8.5f;
+			Middle_low_1.joint_index = 6;
+			Collision_sphere.push_back(Middle_low_1);
+
+			Collision Middle_low_2;
+			Middle_low_2.init_Position << 24, -1, -0.3f, 1;
+			Middle_low_2.radius = 8.5f;
+			Middle_low_2.joint_index = 6;
+			Collision_sphere.push_back(Middle_low_2);
+		}
+
+		//Middle_middle
+		{
+			Collision Middle_middle_0;
+			Middle_middle_0.init_Position << 0, -1.0f, -0.3f, 1;
+			Middle_middle_0.radius = 8.0f;
+			Middle_middle_0.joint_index = 7;
+			Collision_sphere.push_back(Middle_middle_0);
+
+			Collision Middle_middle_1;
+			Middle_middle_1.init_Position << 10, -1.0f, 0.5f, 1;
+			Middle_middle_1.radius = 7.3f;
+			Middle_middle_1.joint_index = 7;
+			Collision_sphere.push_back(Middle_middle_1);
+
+			Collision Middle_middle_2;
+			Middle_middle_2.init_Position << 20, -1.0f, 1.0f, 1;
+			Middle_middle_2.radius = 6.8f;
+			Middle_middle_2.joint_index = 7;
+			Collision_sphere.push_back(Middle_middle_2);
+		}
+
+		//Middle_top
+		{
+			Collision Middle_top_0;
+			Middle_top_0.init_Position << 0, -1.0f, 1.0f, 1;
+			Middle_top_0.radius = 6.3f;
+			Middle_top_0.joint_index = 8;
+			Collision_sphere.push_back(Middle_top_0);
+
+			Collision Middle_top_1;
+			Middle_top_1.init_Position << 10, -1.0f, 1.0f, 1;
+			Middle_top_1.radius = 5.2f;
+			Middle_top_1.joint_index = 8;
+			Collision_sphere.push_back(Middle_top_1);
+		}
+	}
+
+	//Ring
+	{
+		//Ring_low
+		{
+			Collision Ring_low_0;
+			Ring_low_0.init_Position << 0, -1.3f, 0.0f, 1;
+			Ring_low_0.radius = 8.3f;
+			Ring_low_0.joint_index = 14;
+			Collision_sphere.push_back(Ring_low_0);
+
+			Collision Ring_low_1;
+			Ring_low_1.init_Position << 11, -1.3f, 0.0f, 1;
+			Ring_low_1.radius = 7.6f;
+			Ring_low_1.joint_index = 14;
+			Collision_sphere.push_back(Ring_low_1);
+
+			Collision Ring_low_2;
+			Ring_low_2.init_Position << 22, -1.4f, -0.7f, 1;
+			Ring_low_2.radius = 7.3f;
+			Ring_low_2.joint_index = 14;
+			Collision_sphere.push_back(Ring_low_2);
+		}
+
+		//Ring_middle
+		{
+			Collision Ring_middle_0;
+			Ring_middle_0.init_Position << 0, -1.3f, -1.1f, 1;
+			Ring_middle_0.radius = 6.9f;
+			Ring_middle_0.joint_index = 15;
+			Collision_sphere.push_back(Ring_middle_0);
+
+			Collision Ring_middle_1;
+			Ring_middle_1.init_Position << 11, -1.3f, -1.4f, 1;
+			Ring_middle_1.radius = 6.4f;
+			Ring_middle_1.joint_index = 15;
+			Collision_sphere.push_back(Ring_middle_1);
+
+			Collision Ring_middle_2;
+			Ring_middle_2.init_Position << 22, -1.3f, -1.6f, 1;
+			Ring_middle_2.radius = 5.9f;
+			Ring_middle_2.joint_index = 15;
+			Collision_sphere.push_back(Ring_middle_2);
+		}
+
+		//Ring_top
+		{
+			Collision Ring_top_0;
+			Ring_top_0.init_Position << 0, -1.3f, -1.6f, 1;
+			Ring_top_0.radius = 5.6f;
+			Ring_top_0.joint_index = 16;
+			Collision_sphere.push_back(Ring_top_0);
+
+			Collision Ring_top_1;
+			Ring_top_1.init_Position << 8, -1.3f, -2.0f, 1.0f;
+			Ring_top_1.radius = 4.2f;
+			Ring_top_1.joint_index = 16;
+			Collision_sphere.push_back(Ring_top_1);
+		}
+	}
+
+	//Pinkey
+	{
+		//Pinkey_low
+		{
+			Collision Pinkey_Low_0;
+			Pinkey_Low_0.init_Position << 0, -1, -0.8f, 1;
+			Pinkey_Low_0.radius = 7.5f;
+			Pinkey_Low_0.joint_index = 10;
+			Collision_sphere.push_back(Pinkey_Low_0);
+
+			Collision Pinkey_low_1;
+			Pinkey_low_1.init_Position << 11, -1, -1.5f, 1;
+			Pinkey_low_1.radius = 7.0f;
+			Pinkey_low_1.joint_index = 10;
+			Collision_sphere.push_back(Pinkey_low_1);
+
+			Collision Pinkey_low_2;
+			Pinkey_low_2.init_Position << 22, -1, -1.8f, 1;
+			Pinkey_low_2.radius = 6.8f;
+			Pinkey_low_2.joint_index = 10;
+			Collision_sphere.push_back(Pinkey_low_2);
+		}
+
+		//Pinkey_middle
+		{
+			Collision Pinkey_middle_0;
+			Pinkey_middle_0.init_Position << 0, -1, -1.8f, 1;
+			Pinkey_middle_0.radius = 6.6f;
+			Pinkey_middle_0.joint_index = 11;
+			Collision_sphere.push_back(Pinkey_middle_0);
+
+			Collision Pinkey_middle_1;
+			Pinkey_middle_1.init_Position << 9, -1, -1.8f, 1;
+			Pinkey_middle_1.radius = 6.3f;
+			Pinkey_middle_1.joint_index = 11;
+			Collision_sphere.push_back(Pinkey_middle_1);
+
+			Collision Pinkey_middle_2;
+			Pinkey_middle_2.init_Position << 18, -1, -1.8f, 1;
+			Pinkey_middle_2.radius = 5.8f;
+			Pinkey_middle_2.joint_index = 11;
+			Collision_sphere.push_back(Pinkey_middle_2);
+		}
+
+		//Pinkey_top
+		{
+			Collision Pinkey_top_0;
+			Pinkey_top_0.init_Position << 0, -1, -1.8f, 1;
+			Pinkey_top_0.radius = 5.3f;
+			Pinkey_top_0.joint_index = 12;
+			Collision_sphere.push_back(Pinkey_top_0);
+
+			Collision Pinkey_top_1;
+			Pinkey_top_1.init_Position << 7, -1, -1.8f, 1;
+			Pinkey_top_1.radius = 4.2f;
+			Pinkey_top_1.joint_index = 12;
+			Collision_sphere.push_back(Pinkey_top_1);
+		}
+	}
+
+	//Thumb
+	{
+		//Thumb_low
+		{
+			Collision Thumb_Low_0;
+			Thumb_Low_0.init_Position << 0, -14.0f, 3.0f, 1;
+			Thumb_Low_0.radius = 16.0f;
+			Thumb_Low_0.joint_index = 18;
+			Collision_sphere.push_back(Thumb_Low_0);
+
+			Collision Thumb_low_1;
+			Thumb_low_1.init_Position << 17, -8.0f, 3.0f, 1;
+			Thumb_low_1.radius = 13.0f;
+			Thumb_low_1.joint_index = 18;
+			Collision_sphere.push_back(Thumb_low_1);
+		}
+
+		//Thumb_middle
+		{
+			Collision Thumb_middle_0;
+			Thumb_middle_0.init_Position << 0, -1.0f, 3.0f, 1;
+			Thumb_middle_0.radius = 11.0f;
+			Thumb_middle_0.joint_index = 19;
+			Collision_sphere.push_back(Thumb_middle_0);
+
+			Collision Thumb_middle_1;
+			Thumb_middle_1.init_Position << 14, 0.0f, 1.0f, 1;
+			Thumb_middle_1.radius = 8.5f;
+			Thumb_middle_1.joint_index = 19;
+			Collision_sphere.push_back(Thumb_middle_1);
+
+			Collision Thumb_middle_2;
+			Thumb_middle_2.init_Position << 25, 0.0f, 1.0f, 1;
+			Thumb_middle_2.radius = 8.5f;
+			Thumb_middle_2.joint_index = 19;
+			Collision_sphere.push_back(Thumb_middle_2);
+		}
+
+		//Thumb_top
+		{
+			Collision Thumb_top_0;
+			Thumb_top_0.init_Position << 0, -1, 1.0f, 1;
+			Thumb_top_0.radius = 8.0f;
+			Thumb_top_0.joint_index = 20;
+			Collision_sphere.push_back(Thumb_top_0);
+
+			Collision Thumb_top_1;
+			Thumb_top_1.init_Position << 8, -1, 1.0f, 1;
+			Thumb_top_1.radius = 6.0f;
+			Thumb_top_1.joint_index = 20;
+			Collision_sphere.push_back(Thumb_top_1);
+
+			Collision Thumb_top_2;
+			Thumb_top_2.init_Position << 16, 2, 1.0f, 1;
+			Thumb_top_2.radius = 5.0f;
+			Thumb_top_2.joint_index = 20;
+			Collision_sphere.push_back(Thumb_top_2);
+		}
+	}
+
+}
+
+void HandModel::updata_collosion()
+{
+	for (int i = 0; i < Collision_sphere.size(); ++i)
+	{
+		Collision_sphere[i].updata_Position<< Joints[Collision_sphere[i].joint_index].global*Collision_sphere[i].init_Position + GlobalPosition;
+	}
+}
 void HandModel::set_one_rotation(const Pose& pose, int index)
 {
 	Eigen::MatrixXf x = Eigen::MatrixXf::Identity(4, 4);
@@ -673,18 +986,23 @@ void HandModel::Updata_Vertics()
 	Eigen::MatrixXf x = Eigen::MatrixXf::Ones(4, NumofVertices);
 	x.block(0, 0, 3, NumofVertices) = Vectices.block(0, 0, NumofVertices, 3).transpose();
 
-	Eigen::MatrixXf y;
-	Eigen::MatrixXf y0;
-	Eigen::MatrixXf z;
-
-	for (int i = 0; i < NumofJoints; ++i) {
-		y = Weights.block(0, i, NumofVertices, 1);// 在所有顶点 对于 该关节点的weight
-		y0 = y.replicate(1, 4);    //分别是行重复1遍，列重复4遍，结果为（num_vertices_，4）这么大小的矩阵
-		z = Joints[i].global * Joints[i].local.inverse() * x;
-		t = t + z.cwiseProduct(y0.transpose());
+    #pragma omp parallel
+	{
+        #pragma omp for
+		for (int i = 0; i < NumofJoints; ++i) {
+			Eigen::MatrixXf y = Weights.block(0, i, NumofVertices, 1);// 在所有顶点 对于 该关节点的weight
+			Eigen::MatrixXf y0 = y.replicate(1, 4);    //分别是行重复1遍，列重复4遍，结果为（num_vertices_，4）这么大小的矩阵
+			Eigen::MatrixXf z = Joints[i].global * Joints[i].local.inverse() * x;
+            #pragma omp critical(a)
+			{
+				t = t + z.cwiseProduct(y0.transpose());
+			}
+		}
 	}
+
 	vertices_update_ = t.transpose();
 
+#pragma omp parallel for
 	for (int i = 0; i < vertices_update_.rows(); ++i) {
 		vertices_update_(i, 0) += GlobalPosition(0);
 		vertices_update_(i, 1) += GlobalPosition(1);
@@ -698,6 +1016,7 @@ void HandModel::Updata(float* params)
 
 	compute_rotation_matrix(params);
 	compute_global_matrix();
+	updata_collosion();
 	Updata_Joints();
 	Updata_axis();
 
@@ -721,44 +1040,48 @@ void HandModel::Compute_normal_And_visibel_vertices()
 	Visible_vertices_index.clear();
 	Face_normal.clear();
 	Vertices_normal.setZero();
-	Vector3f A, B, C, BA, BC;
-	for (int i = 0; i < NumofFaces; ++i)
+#pragma omp parallel
 	{
-		//这里我假设，如果假设错了，那么叉乘时候，就BC*BA变成BA*BC
-		//            A
-		//          /  \
-				//         B — C
-		A << vertices_update_(FaceIndex(i, 0), 0), vertices_update_(FaceIndex(i, 0), 1), vertices_update_(FaceIndex(i, 0), 2);
-		B << vertices_update_(FaceIndex(i, 1), 0), vertices_update_(FaceIndex(i, 1), 1), vertices_update_(FaceIndex(i, 1), 2);
-		C << vertices_update_(FaceIndex(i, 2), 0), vertices_update_(FaceIndex(i, 2), 1), vertices_update_(FaceIndex(i, 2), 2);
+#pragma omp for
+		for (int i = 0; i < NumofFaces; ++i)
+		{
+			Vector3f A, B, C, BA, BC;
+			//这里我假设，如果假设错了，那么叉乘时候，就BC*BA变成BA*BC
+			//            A
+			//          /  \
+			//         B — C
+			A << vertices_update_(FaceIndex(i, 0), 0), vertices_update_(FaceIndex(i, 0), 1), vertices_update_(FaceIndex(i, 0), 2);
+			B << vertices_update_(FaceIndex(i, 1), 0), vertices_update_(FaceIndex(i, 1), 1), vertices_update_(FaceIndex(i, 1), 2);
+			C << vertices_update_(FaceIndex(i, 2), 0), vertices_update_(FaceIndex(i, 2), 1), vertices_update_(FaceIndex(i, 2), 2);
 
-		BC << C - B;
-		BA << A - B;
+			BC << C - B;
+			BA << A - B;
 
-		Vector3f nom(BC.cross(BA));
+			Vector3f nom(BC.cross(BA));
 
-		nom.normalize();
-		Face_normal.push_back(nom);
+			nom.normalize();
+			Face_normal[i] = nom;
 
-		Vertices_normal(FaceIndex(i, 0), 0) += nom(0);
-		Vertices_normal(FaceIndex(i, 1), 0) += nom(0);
-		Vertices_normal(FaceIndex(i, 2), 0) += nom(0);
+			Vertices_normal(FaceIndex(i, 0), 0) += nom(0);
+			Vertices_normal(FaceIndex(i, 1), 0) += nom(0);
+			Vertices_normal(FaceIndex(i, 2), 0) += nom(0);
 
-		Vertices_normal(FaceIndex(i, 0), 1) += nom(1);
-		Vertices_normal(FaceIndex(i, 1), 1) += nom(1);
-		Vertices_normal(FaceIndex(i, 2), 1) += nom(1);
+			Vertices_normal(FaceIndex(i, 0), 1) += nom(1);
+			Vertices_normal(FaceIndex(i, 1), 1) += nom(1);
+			Vertices_normal(FaceIndex(i, 2), 1) += nom(1);
 
-		Vertices_normal(FaceIndex(i, 0), 2) += nom(2);
-		Vertices_normal(FaceIndex(i, 1), 2) += nom(2);
-		Vertices_normal(FaceIndex(i, 2), 2) += nom(2);
+			Vertices_normal(FaceIndex(i, 0), 2) += nom(2);
+			Vertices_normal(FaceIndex(i, 1), 2) += nom(2);
+			Vertices_normal(FaceIndex(i, 2), 2) += nom(2);
 
+		}
 	}
 
 	for (int i = 0; i < Vertices_normal.rows(); ++i)
 	{
 		Vertices_normal.row(i).normalize();
 
-		if (-(Vertices_normal(i, 2)) >= 0)
+		if (-(Vertices_normal(i, 2)) <= 0)
 		{
 			Vector3f visible_v(vertices_update_(i, 0), vertices_update_(i, 1), vertices_update_(i, 2));
 			Visible_vertices.push_back(visible_v);
