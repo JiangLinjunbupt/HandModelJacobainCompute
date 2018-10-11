@@ -120,6 +120,7 @@ void draw_mesh()
 		glEnd();
 	}
 }
+
 void draw_WireHand()
 {
 	glDisable(GL_LIGHT0);
@@ -148,6 +149,7 @@ void draw_WireHand()
 		glEnd();
 	}
 }
+
 void draw_vertex()
 {
 	glDisable(GL_LIGHT0);
@@ -299,10 +301,38 @@ void draw_Collision()
 		glColor3f(1.0, 0.0, 0.0);
 		glPushMatrix();
 		glTranslatef(handmodel->Collision_sphere[i].updata_Position(0), handmodel->Collision_sphere[i].updata_Position(1), handmodel->Collision_sphere[i].updata_Position(2));
-		glutSolidSphere(handmodel->Collision_sphere[i].radius, 10, 10);
+		glutSolidSphere(handmodel->Collision_sphere[i].updata_radius, 10, 10);
 		glPopMatrix();
 	}
 }
+
+void show_Collision()
+{
+	glDisable(GL_LIGHT0);
+	glDisable(GL_LIGHTING);
+	int NUMofCollision = handmodel->Collision_sphere.size();
+	for (int i = 0; i < NUMofCollision; ++i)
+	{
+		for (int j = 0; j < NUMofCollision; ++j)
+		{
+			if (handmodel->Collision_Judge_Matrix(i, j) == 1)
+			{
+				glColor3f(1.0, 1.0, 0.0);
+				glPushMatrix();
+				glTranslatef(handmodel->Collision_sphere[i].updata_Position(0), handmodel->Collision_sphere[i].updata_Position(1), handmodel->Collision_sphere[i].updata_Position(2));
+				glutSolidSphere(handmodel->Collision_sphere[i].updata_radius, 10, 10);
+				glPopMatrix();
+
+				glColor3f(1.0, 1.0, 0.0);
+				glPushMatrix();
+				glTranslatef(handmodel->Collision_sphere[j].updata_Position(0), handmodel->Collision_sphere[j].updata_Position(1), handmodel->Collision_sphere[j].updata_Position(2));
+				glutSolidSphere(handmodel->Collision_sphere[j].updata_radius, 10, 10);
+				glPopMatrix();
+			}
+		}
+	}
+}
+
 void draw() {
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -310,9 +340,9 @@ void draw() {
 	gluPerspective(180, 1.5, -1000, 1000);
 	glLoadIdentity();
 	control.gx = handmodel->GlobalPosition(0);
-	control.gy = handmodel->GlobalPosition(1) + 50;
+	control.gy = handmodel->GlobalPosition(1);
 	control.gz = handmodel->GlobalPosition(2);
-	double r = 160;
+	double r = 200;
 	double x = r*sin(control.roty)*cos(control.rotx);
 	double y = r*sin(control.roty)*sin(control.rotx);
 	double z = r*cos(control.roty);
@@ -325,8 +355,9 @@ void draw() {
 	//draw_vertex();
 	draw_skeleton();
 	draw_Coordinate();
-	draw_ALL_joint_coordinate();
+	//draw_ALL_joint_coordinate();
 	draw_Collision();
+	show_Collision();
 	//draw_target_difference();
 	//draw_Hand_visible_vertex();
 
@@ -345,8 +376,6 @@ void idle() {
 		{
 			GetGloveData[i] = GetSharedMemeryPtr[i];
 		}
-
-		cout << GetGloveData[23] << endl;
 
 		handmodel->Updata(GetGloveData);
 	}

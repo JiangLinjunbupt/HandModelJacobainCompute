@@ -376,330 +376,22 @@ HandModel::HandModel()
 	//       0      ------>    整体变长
 	//       1      ------>    整体变宽
 	//       2      ------>    整体变厚
-	Hand_scale << 1, 1, 1;
+	Hand_scale << 1.0f, 1.0f, 1.0f;
 
 	//Jacobain related 
 	Joints_jacobian = Eigen::MatrixXf::Zero(NumofJoints * 3, NumberofParams);
 	Solved = false;
 
 	set_collosion();
+	create_adjacency_matrix();
+
 	compute_local_coordinate();
 	compute_parent_child_transform();
 	Updata(Params);
-}
 
-void HandModel::set_collosion()
-{
-	Collision_sphere.clear();
-	//index
-	{
-		//index_low
-		{
-			Collision index_Low_0;
-			index_Low_0.init_Position << 0, -2, -0.8f, 1;
-			index_Low_0.radius = 9.0f;
-			index_Low_0.joint_index = 2;
-			Collision_sphere.push_back(index_Low_0);
-
-			Collision index_low_1;
-			index_low_1.init_Position << 11, -2, -0.8f, 1;
-			index_low_1.radius = 8.5f;
-			index_low_1.joint_index = 2;
-			Collision_sphere.push_back(index_low_1);
-
-			Collision index_low_2;
-			index_low_2.init_Position << 22, -1, -0.8f, 1;
-			index_low_2.radius = 8.5f;
-			index_low_2.joint_index = 2;
-			Collision_sphere.push_back(index_low_2);
-		}
-
-		//index_middle
-		{
-			Collision index_middle_0;
-			index_middle_0.init_Position << 0, -1.0f, -0.8f, 1;
-			index_middle_0.radius = 8.3f;
-			index_middle_0.joint_index = 3;
-			Collision_sphere.push_back(index_middle_0);
-
-			Collision index_middle_1;
-			index_middle_1.init_Position << 10, -1.0f, -0.8f, 1;
-			index_middle_1.radius = 7.5f;
-			index_middle_1.joint_index = 3;
-			Collision_sphere.push_back(index_middle_1);
-
-			Collision index_middle_2;
-			index_middle_2.init_Position << 20, -1.0f, -0.8f, 1;
-			index_middle_2.radius = 7.0f;
-			index_middle_2.joint_index = 3;
-			Collision_sphere.push_back(index_middle_2);
-		}
-
-		//index_top
-		{
-			Collision index_top_0;
-			index_top_0.init_Position << 0, -1.0f, -0.8f, 1;
-			index_top_0.radius = 6.8f;
-			index_top_0.joint_index = 4;
-			Collision_sphere.push_back(index_top_0);
-
-			Collision index_top_1;
-			index_top_1.init_Position << 10, -1.0f, -1.0f, 1;
-			index_top_1.radius = 4.5f;
-			index_top_1.joint_index = 4;
-			Collision_sphere.push_back(index_top_1);
-		}
-	}
-
-	//Middle
-	{
-		//Middle_low
-		{
-			Collision Middle_low_0;
-			Middle_low_0.init_Position << 0, -2, -0.3f, 1;
-			Middle_low_0.radius = 9.0f;
-			Middle_low_0.joint_index = 6;
-			Collision_sphere.push_back(Middle_low_0);
-
-			Collision Middle_low_1;
-			Middle_low_1.init_Position << 12, -2, -0.3f, 1;
-			Middle_low_1.radius = 8.5f;
-			Middle_low_1.joint_index = 6;
-			Collision_sphere.push_back(Middle_low_1);
-
-			Collision Middle_low_2;
-			Middle_low_2.init_Position << 24, -1, -0.3f, 1;
-			Middle_low_2.radius = 8.5f;
-			Middle_low_2.joint_index = 6;
-			Collision_sphere.push_back(Middle_low_2);
-		}
-
-		//Middle_middle
-		{
-			Collision Middle_middle_0;
-			Middle_middle_0.init_Position << 0, -1.0f, -0.3f, 1;
-			Middle_middle_0.radius = 8.0f;
-			Middle_middle_0.joint_index = 7;
-			Collision_sphere.push_back(Middle_middle_0);
-
-			Collision Middle_middle_1;
-			Middle_middle_1.init_Position << 10, -1.0f, 0.5f, 1;
-			Middle_middle_1.radius = 7.3f;
-			Middle_middle_1.joint_index = 7;
-			Collision_sphere.push_back(Middle_middle_1);
-
-			Collision Middle_middle_2;
-			Middle_middle_2.init_Position << 20, -1.0f, 1.0f, 1;
-			Middle_middle_2.radius = 6.8f;
-			Middle_middle_2.joint_index = 7;
-			Collision_sphere.push_back(Middle_middle_2);
-		}
-
-		//Middle_top
-		{
-			Collision Middle_top_0;
-			Middle_top_0.init_Position << 0, -1.0f, 1.0f, 1;
-			Middle_top_0.radius = 6.3f;
-			Middle_top_0.joint_index = 8;
-			Collision_sphere.push_back(Middle_top_0);
-
-			Collision Middle_top_1;
-			Middle_top_1.init_Position << 10, -1.0f, 1.0f, 1;
-			Middle_top_1.radius = 5.2f;
-			Middle_top_1.joint_index = 8;
-			Collision_sphere.push_back(Middle_top_1);
-		}
-	}
-
-	//Ring
-	{
-		//Ring_low
-		{
-			Collision Ring_low_0;
-			Ring_low_0.init_Position << 0, -1.3f, 0.0f, 1;
-			Ring_low_0.radius = 8.3f;
-			Ring_low_0.joint_index = 14;
-			Collision_sphere.push_back(Ring_low_0);
-
-			Collision Ring_low_1;
-			Ring_low_1.init_Position << 11, -1.3f, 0.0f, 1;
-			Ring_low_1.radius = 7.6f;
-			Ring_low_1.joint_index = 14;
-			Collision_sphere.push_back(Ring_low_1);
-
-			Collision Ring_low_2;
-			Ring_low_2.init_Position << 22, -1.4f, -0.7f, 1;
-			Ring_low_2.radius = 7.3f;
-			Ring_low_2.joint_index = 14;
-			Collision_sphere.push_back(Ring_low_2);
-		}
-
-		//Ring_middle
-		{
-			Collision Ring_middle_0;
-			Ring_middle_0.init_Position << 0, -1.3f, -1.1f, 1;
-			Ring_middle_0.radius = 6.9f;
-			Ring_middle_0.joint_index = 15;
-			Collision_sphere.push_back(Ring_middle_0);
-
-			Collision Ring_middle_1;
-			Ring_middle_1.init_Position << 11, -1.3f, -1.4f, 1;
-			Ring_middle_1.radius = 6.4f;
-			Ring_middle_1.joint_index = 15;
-			Collision_sphere.push_back(Ring_middle_1);
-
-			Collision Ring_middle_2;
-			Ring_middle_2.init_Position << 22, -1.3f, -1.6f, 1;
-			Ring_middle_2.radius = 5.9f;
-			Ring_middle_2.joint_index = 15;
-			Collision_sphere.push_back(Ring_middle_2);
-		}
-
-		//Ring_top
-		{
-			Collision Ring_top_0;
-			Ring_top_0.init_Position << 0, -1.3f, -1.6f, 1;
-			Ring_top_0.radius = 5.6f;
-			Ring_top_0.joint_index = 16;
-			Collision_sphere.push_back(Ring_top_0);
-
-			Collision Ring_top_1;
-			Ring_top_1.init_Position << 8, -1.3f, -2.0f, 1.0f;
-			Ring_top_1.radius = 4.2f;
-			Ring_top_1.joint_index = 16;
-			Collision_sphere.push_back(Ring_top_1);
-		}
-	}
-
-	//Pinkey
-	{
-		//Pinkey_low
-		{
-			Collision Pinkey_Low_0;
-			Pinkey_Low_0.init_Position << 0, -1, -0.8f, 1;
-			Pinkey_Low_0.radius = 7.5f;
-			Pinkey_Low_0.joint_index = 10;
-			Collision_sphere.push_back(Pinkey_Low_0);
-
-			Collision Pinkey_low_1;
-			Pinkey_low_1.init_Position << 11, -1, -1.5f, 1;
-			Pinkey_low_1.radius = 7.0f;
-			Pinkey_low_1.joint_index = 10;
-			Collision_sphere.push_back(Pinkey_low_1);
-
-			Collision Pinkey_low_2;
-			Pinkey_low_2.init_Position << 22, -1, -1.8f, 1;
-			Pinkey_low_2.radius = 6.8f;
-			Pinkey_low_2.joint_index = 10;
-			Collision_sphere.push_back(Pinkey_low_2);
-		}
-
-		//Pinkey_middle
-		{
-			Collision Pinkey_middle_0;
-			Pinkey_middle_0.init_Position << 0, -1, -1.8f, 1;
-			Pinkey_middle_0.radius = 6.6f;
-			Pinkey_middle_0.joint_index = 11;
-			Collision_sphere.push_back(Pinkey_middle_0);
-
-			Collision Pinkey_middle_1;
-			Pinkey_middle_1.init_Position << 9, -1, -1.8f, 1;
-			Pinkey_middle_1.radius = 6.3f;
-			Pinkey_middle_1.joint_index = 11;
-			Collision_sphere.push_back(Pinkey_middle_1);
-
-			Collision Pinkey_middle_2;
-			Pinkey_middle_2.init_Position << 18, -1, -1.8f, 1;
-			Pinkey_middle_2.radius = 5.8f;
-			Pinkey_middle_2.joint_index = 11;
-			Collision_sphere.push_back(Pinkey_middle_2);
-		}
-
-		//Pinkey_top
-		{
-			Collision Pinkey_top_0;
-			Pinkey_top_0.init_Position << 0, -1, -1.8f, 1;
-			Pinkey_top_0.radius = 5.3f;
-			Pinkey_top_0.joint_index = 12;
-			Collision_sphere.push_back(Pinkey_top_0);
-
-			Collision Pinkey_top_1;
-			Pinkey_top_1.init_Position << 7, -1, -1.8f, 1;
-			Pinkey_top_1.radius = 4.2f;
-			Pinkey_top_1.joint_index = 12;
-			Collision_sphere.push_back(Pinkey_top_1);
-		}
-	}
-
-	//Thumb
-	{
-		//Thumb_low
-		{
-			Collision Thumb_Low_0;
-			Thumb_Low_0.init_Position << 0, -14.0f, 3.0f, 1;
-			Thumb_Low_0.radius = 16.0f;
-			Thumb_Low_0.joint_index = 18;
-			Collision_sphere.push_back(Thumb_Low_0);
-
-			Collision Thumb_low_1;
-			Thumb_low_1.init_Position << 17, -8.0f, 3.0f, 1;
-			Thumb_low_1.radius = 13.0f;
-			Thumb_low_1.joint_index = 18;
-			Collision_sphere.push_back(Thumb_low_1);
-		}
-
-		//Thumb_middle
-		{
-			Collision Thumb_middle_0;
-			Thumb_middle_0.init_Position << 0, -1.0f, 3.0f, 1;
-			Thumb_middle_0.radius = 11.0f;
-			Thumb_middle_0.joint_index = 19;
-			Collision_sphere.push_back(Thumb_middle_0);
-
-			Collision Thumb_middle_1;
-			Thumb_middle_1.init_Position << 14, 0.0f, 1.0f, 1;
-			Thumb_middle_1.radius = 8.5f;
-			Thumb_middle_1.joint_index = 19;
-			Collision_sphere.push_back(Thumb_middle_1);
-
-			Collision Thumb_middle_2;
-			Thumb_middle_2.init_Position << 25, 0.0f, 1.0f, 1;
-			Thumb_middle_2.radius = 8.5f;
-			Thumb_middle_2.joint_index = 19;
-			Collision_sphere.push_back(Thumb_middle_2);
-		}
-
-		//Thumb_top
-		{
-			Collision Thumb_top_0;
-			Thumb_top_0.init_Position << 0, -1, 1.0f, 1;
-			Thumb_top_0.radius = 8.0f;
-			Thumb_top_0.joint_index = 20;
-			Collision_sphere.push_back(Thumb_top_0);
-
-			Collision Thumb_top_1;
-			Thumb_top_1.init_Position << 8, -1, 1.0f, 1;
-			Thumb_top_1.radius = 6.0f;
-			Thumb_top_1.joint_index = 20;
-			Collision_sphere.push_back(Thumb_top_1);
-
-			Collision Thumb_top_2;
-			Thumb_top_2.init_Position << 16, 2, 1.0f, 1;
-			Thumb_top_2.radius = 5.0f;
-			Thumb_top_2.joint_index = 20;
-			Collision_sphere.push_back(Thumb_top_2);
-		}
-	}
 
 }
 
-void HandModel::updata_collosion()
-{
-	for (int i = 0; i < Collision_sphere.size(); ++i)
-	{
-		Collision_sphere[i].updata_Position<< Joints[Collision_sphere[i].joint_index].global*Collision_sphere[i].init_Position + GlobalPosition;
-	}
-}
 void HandModel::set_one_rotation(const Pose& pose, int index)
 {
 	Eigen::MatrixXf x = Eigen::MatrixXf::Identity(4, 4);
@@ -1016,7 +708,10 @@ void HandModel::Updata(float* params)
 
 	compute_rotation_matrix(params);
 	compute_global_matrix();
+
 	updata_collosion();
+	create_distance_matrix();
+
 	Updata_Joints();
 	Updata_axis();
 
@@ -1271,3 +966,469 @@ void HandModel::load_target_joints()
 	f.close();
 	//printf("Load Target Joints succeed!!!\n");
 }
+
+
+//collision related
+void HandModel::set_collosion()
+{
+	Collision_sphere.clear();
+	//index
+	{
+		//index_low
+		{
+			Collision index_Low_0;
+			index_Low_0.id = 0; 
+			index_Low_0.adjscent_id[0] = -1; index_Low_0.adjscent_id[1] = 1;
+			index_Low_0.init_Position << 0, -2, -0.8f, 1;
+			index_Low_0.init_radius = 9.0f;
+			index_Low_0.joint_index = 2;
+			Collision_sphere.push_back(index_Low_0);
+
+			Collision index_low_1;
+			index_low_1.id = 1;
+			index_low_1.adjscent_id[0] = 0; index_low_1.adjscent_id[1] = 2;
+			index_low_1.init_Position << 11, -2, -0.8f, 1;
+			index_low_1.init_radius = 8.5f;
+			index_low_1.joint_index = 2;
+			Collision_sphere.push_back(index_low_1);
+
+			Collision index_low_2;
+			index_low_2.id = 2;
+			index_low_2.adjscent_id[0] = 1; index_low_2.adjscent_id[1] = 3;
+			index_low_2.init_Position << 20, -1, -0.8f, 1;
+			index_low_2.init_radius = 8.2f;
+			index_low_2.joint_index = 2;
+			Collision_sphere.push_back(index_low_2);
+		}
+
+		//index_middle
+		{
+			Collision index_middle_0;
+			index_middle_0.id = 3;
+			index_middle_0.adjscent_id[0] = 2; index_middle_0.adjscent_id[1] = 4;
+			index_middle_0.init_Position << 0, -1.0f, -0.8f, 1;
+			index_middle_0.init_radius = 8.3f;
+			index_middle_0.joint_index = 3;
+			Collision_sphere.push_back(index_middle_0);
+
+			Collision index_middle_1;
+			index_middle_1.id = 4;
+			index_middle_1.adjscent_id[0] = 3; index_middle_1.adjscent_id[1] = 5;
+			index_middle_1.init_Position << 11, -1.0f, -0.8f, 1;
+			index_middle_1.init_radius = 7.3f;
+			index_middle_1.joint_index = 3;
+			Collision_sphere.push_back(index_middle_1);
+
+			Collision index_middle_2;
+			index_middle_2.id = 5;
+			index_middle_2.adjscent_id[0] = 4; index_middle_2.adjscent_id[1] = 6;
+			index_middle_2.init_Position << 20, -1.0f, -0.8f, 1;
+			index_middle_2.init_radius = 7.0f;
+			index_middle_2.joint_index = 3;
+			Collision_sphere.push_back(index_middle_2);
+		}
+
+		//index_top
+		{
+			Collision index_top_0;
+			index_top_0.id = 6;
+			index_top_0.adjscent_id[0] = 5; index_top_0.adjscent_id[1] = 7;
+			index_top_0.init_Position << 0, -1.0f, -0.8f, 1;
+			index_top_0.init_radius = 6.8f;
+			index_top_0.joint_index = 4;
+			Collision_sphere.push_back(index_top_0);
+
+			Collision index_top_1;
+			index_top_1.id = 7;
+			index_top_1.adjscent_id[0] = 6; index_top_1.adjscent_id[1] = -1;
+			index_top_1.init_Position << 10, -1.0f, -1.0f, 1;
+			index_top_1.init_radius = 4.5f;
+			index_top_1.joint_index = 4;
+			Collision_sphere.push_back(index_top_1);
+		}
+	}
+
+	//Middle
+	{
+		//Middle_low
+		{
+			Collision Middle_low_0;
+			Middle_low_0.id = 8;
+			Middle_low_0.adjscent_id[0] = 9; Middle_low_0.adjscent_id[1] = -1;
+			Middle_low_0.init_Position << 0, -2, -0.3f, 1;
+			Middle_low_0.init_radius = 9.0f;
+			Middle_low_0.joint_index = 6;
+			Collision_sphere.push_back(Middle_low_0);
+
+			Collision Middle_low_1;
+			Middle_low_1.id = 9;
+			Middle_low_1.adjscent_id[0] = 8; Middle_low_1.adjscent_id[1] = 10;
+			Middle_low_1.init_Position << 12, -2, -0.3f, 1;
+			Middle_low_1.init_radius = 8.5f;
+			Middle_low_1.joint_index = 6;
+			Collision_sphere.push_back(Middle_low_1);
+
+			Collision Middle_low_2;
+			Middle_low_2.id = 10;
+			Middle_low_2.adjscent_id[0] = 9; Middle_low_2.adjscent_id[1] = 11;
+			Middle_low_2.init_Position << 24, -1, -0.3f, 1;
+			Middle_low_2.init_radius = 8.5f;
+			Middle_low_2.joint_index = 6;
+			Collision_sphere.push_back(Middle_low_2);
+		}
+
+		//Middle_middle
+		{
+			Collision Middle_middle_0;
+			Middle_middle_0.id = 11;
+			Middle_middle_0.adjscent_id[0] = 10; Middle_middle_0.adjscent_id[1] = 12;
+			Middle_middle_0.init_Position << 0, -1.0f, -0.3f, 1;
+			Middle_middle_0.init_radius = 8.0f;
+			Middle_middle_0.joint_index = 7;
+			Collision_sphere.push_back(Middle_middle_0);
+
+			Collision Middle_middle_1;
+			Middle_middle_1.id = 12;
+			Middle_middle_1.adjscent_id[0] = 11; Middle_middle_1.adjscent_id[1] = 13;
+			Middle_middle_1.init_Position << 10, -1.0f, 0.5f, 1;
+			Middle_middle_1.init_radius = 7.3f;
+			Middle_middle_1.joint_index = 7;
+			Collision_sphere.push_back(Middle_middle_1);
+
+			Collision Middle_middle_2;
+			Middle_middle_2.id = 13;
+			Middle_middle_2.adjscent_id[0] = 12; Middle_middle_2.adjscent_id[1] = 14;
+			Middle_middle_2.init_Position << 20, -1.0f, 1.0f, 1;
+			Middle_middle_2.init_radius = 6.8f;
+			Middle_middle_2.joint_index = 7;
+			Collision_sphere.push_back(Middle_middle_2);
+		}
+
+		//Middle_top
+		{
+			Collision Middle_top_0;
+			Middle_top_0.id = 14;
+			Middle_top_0.adjscent_id[0] = 13; Middle_top_0.adjscent_id[1] = 15;
+			Middle_top_0.init_Position << 0, -1.0f, 1.0f, 1;
+			Middle_top_0.init_radius = 6.3f;
+			Middle_top_0.joint_index = 8;
+			Collision_sphere.push_back(Middle_top_0);
+
+			Collision Middle_top_1;
+			Middle_top_1.id = 15;
+			Middle_top_1.adjscent_id[0] = 14; Middle_top_1.adjscent_id[1] = -1;
+			Middle_top_1.init_Position << 10, -1.0f, 1.0f, 1;
+			Middle_top_1.init_radius = 5.2f;
+			Middle_top_1.joint_index = 8;
+			Collision_sphere.push_back(Middle_top_1);
+		}
+	}
+
+	//Ring
+	{
+		//Ring_low
+		{
+			Collision Ring_low_0;
+			Ring_low_0.id = 16;
+			Ring_low_0.adjscent_id[0] = -1; Ring_low_0.adjscent_id[1] = 17;
+			Ring_low_0.init_Position << 0, -1.3f, 0.0f, 1;
+			Ring_low_0.init_radius = 8.3f;
+			Ring_low_0.joint_index = 14;
+			Collision_sphere.push_back(Ring_low_0);
+
+			Collision Ring_low_1;
+			Ring_low_1.id = 17;
+			Ring_low_1.adjscent_id[0] = 16; Ring_low_1.adjscent_id[1] = 18;
+			Ring_low_1.init_Position << 11, -1.3f, 0.0f, 1;
+			Ring_low_1.init_radius = 7.6f;
+			Ring_low_1.joint_index = 14;
+			Collision_sphere.push_back(Ring_low_1);
+
+			Collision Ring_low_2;
+			Ring_low_2.id = 18;
+			Ring_low_2.adjscent_id[0] = 17; Ring_low_2.adjscent_id[1] = 19;
+			Ring_low_2.init_Position << 22, -1.4f, -0.7f, 1;
+			Ring_low_2.init_radius = 7.3f;
+			Ring_low_2.joint_index = 14;
+			Collision_sphere.push_back(Ring_low_2);
+		}
+
+		//Ring_middle
+		{
+			Collision Ring_middle_0;
+			Ring_middle_0.id = 19;
+			Ring_middle_0.adjscent_id[0] = 18; Ring_middle_0.adjscent_id[1] = 20;
+			Ring_middle_0.init_Position << 0, -1.3f, -1.1f, 1;
+			Ring_middle_0.init_radius = 6.9f;
+			Ring_middle_0.joint_index = 15;
+			Collision_sphere.push_back(Ring_middle_0);
+
+			Collision Ring_middle_1;
+			Ring_middle_1.id = 20;
+			Ring_middle_1.adjscent_id[0] = 19; Ring_middle_1.adjscent_id[1] = 21;
+			Ring_middle_1.init_Position << 11, -1.3f, -1.4f, 1;
+			Ring_middle_1.init_radius = 6.4f;
+			Ring_middle_1.joint_index = 15;
+			Collision_sphere.push_back(Ring_middle_1);
+
+			Collision Ring_middle_2;
+			Ring_middle_2.id = 21;
+			Ring_middle_2.adjscent_id[0] = 20; Ring_middle_2.adjscent_id[1] = 22;
+			Ring_middle_2.init_Position << 22, -1.3f, -1.6f, 1;
+			Ring_middle_2.init_radius = 5.9f;
+			Ring_middle_2.joint_index = 15;
+			Collision_sphere.push_back(Ring_middle_2);
+		}
+
+		//Ring_top
+		{
+			Collision Ring_top_0;
+			Ring_top_0.id = 22;
+			Ring_top_0.adjscent_id[0] = 21; Ring_top_0.adjscent_id[1] = 23;
+			Ring_top_0.init_Position << 0, -1.3f, -1.6f, 1;
+			Ring_top_0.init_radius = 5.6f;
+			Ring_top_0.joint_index = 16;
+			Collision_sphere.push_back(Ring_top_0);
+
+			Collision Ring_top_1;
+			Ring_top_1.id = 23;
+			Ring_top_1.adjscent_id[0] = 22; Ring_top_1.adjscent_id[1] = -1;
+			Ring_top_1.init_Position << 8, -1.3f, -2.0f, 1.0f;
+			Ring_top_1.init_radius = 4.7f;
+			Ring_top_1.joint_index = 16;
+			Collision_sphere.push_back(Ring_top_1);
+		}
+	}
+
+	//Pinkey
+	{
+		//Pinkey_low
+		{
+			Collision Pinkey_Low_0;
+			Pinkey_Low_0.id = 24;
+			Pinkey_Low_0.adjscent_id[0] = -1; Pinkey_Low_0.adjscent_id[1] = 25;
+			Pinkey_Low_0.init_Position << 0, -1, -0.8f, 1;
+			Pinkey_Low_0.init_radius = 7.5f;
+			Pinkey_Low_0.joint_index = 10;
+			Collision_sphere.push_back(Pinkey_Low_0);
+
+			Collision Pinkey_low_1;
+			Pinkey_low_1.id = 25;
+			Pinkey_low_1.adjscent_id[0] = 24; Pinkey_low_1.adjscent_id[1] = 26;
+			Pinkey_low_1.init_Position << 10, -1, -1.5f, 1;
+			Pinkey_low_1.init_radius = 6.9f;
+			Pinkey_low_1.joint_index = 10;
+			Collision_sphere.push_back(Pinkey_low_1);
+
+			Collision Pinkey_low_2;
+			Pinkey_low_2.id = 26;
+			Pinkey_low_2.adjscent_id[0] = 25; Pinkey_low_2.adjscent_id[1] = 27;
+			Pinkey_low_2.init_Position << 19, -1, -1.8f, 1;
+			Pinkey_low_2.init_radius = 6.4f;
+			Pinkey_low_2.joint_index = 10;
+			Collision_sphere.push_back(Pinkey_low_2);
+		}
+
+		//Pinkey_middle
+		{
+			Collision Pinkey_middle_0;
+			Pinkey_middle_0.id = 27;
+			Pinkey_middle_0.adjscent_id[0] = 26; Pinkey_middle_0.adjscent_id[1] = 28;
+			Pinkey_middle_0.init_Position << 0, -1, -1.8f, 1;
+			Pinkey_middle_0.init_radius = 6.4f;
+			Pinkey_middle_0.joint_index = 11;
+			Collision_sphere.push_back(Pinkey_middle_0);
+
+			Collision Pinkey_middle_1;
+			Pinkey_middle_1.id = 28;
+			Pinkey_middle_1.adjscent_id[0] = 27; Pinkey_middle_1.adjscent_id[1] = 29;
+			Pinkey_middle_1.init_Position << 10, -1, -1.8f, 1;
+			Pinkey_middle_1.init_radius = 6.0f;
+			Pinkey_middle_1.joint_index = 11;
+			Collision_sphere.push_back(Pinkey_middle_1);
+
+			Collision Pinkey_middle_2;
+			Pinkey_middle_2.id = 29;
+			Pinkey_middle_2.adjscent_id[0] = 28; Pinkey_middle_2.adjscent_id[1] = 30;
+			Pinkey_middle_2.init_Position << 16, -1, -1.8f, 1;
+			Pinkey_middle_2.init_radius = 5.5f;
+			Pinkey_middle_2.joint_index = 11;
+			Collision_sphere.push_back(Pinkey_middle_2);
+		}
+
+		//Pinkey_top
+		{
+			Collision Pinkey_top_0;
+			Pinkey_top_0.id = 30;
+			Pinkey_top_0.adjscent_id[0] = 29; Pinkey_top_0.adjscent_id[1] = 31;
+			Pinkey_top_0.init_Position << 0, -1, -1.8f, 1;
+			Pinkey_top_0.init_radius = 5.3f;
+			Pinkey_top_0.joint_index = 12;
+			Collision_sphere.push_back(Pinkey_top_0);
+
+			Collision Pinkey_top_1;
+			Pinkey_top_1.id = 31;
+			Pinkey_top_1.adjscent_id[0] = 30; Pinkey_top_1.adjscent_id[1] = -1;
+			Pinkey_top_1.init_Position << 9, -1, -1.8f, 1;
+			Pinkey_top_1.init_radius = 4.2f;
+			Pinkey_top_1.joint_index = 12;
+			Collision_sphere.push_back(Pinkey_top_1);
+		}
+	}
+
+	//Thumb
+	{
+		//Thumb_low
+		{
+			Collision Thumb_Low_0;
+			Thumb_Low_0.id = 32;
+			Thumb_Low_0.adjscent_id[0] = -1; Thumb_Low_0.adjscent_id[1] = 33;
+			Thumb_Low_0.init_Position << 0, -14.0f, 3.0f, 1;
+			Thumb_Low_0.init_radius = 16.0f;
+			Thumb_Low_0.joint_index = 18;
+			Collision_sphere.push_back(Thumb_Low_0);
+
+			Collision Thumb_low_1;
+			Thumb_low_1.id = 33;
+			Thumb_low_1.adjscent_id[0] = 32; Thumb_low_1.adjscent_id[1] = 34;
+			Thumb_low_1.init_Position << 17, -8.0f, 3.0f, 1;
+			Thumb_low_1.init_radius = 13.0f;
+			Thumb_low_1.joint_index = 18;
+			Collision_sphere.push_back(Thumb_low_1);
+		}
+
+		//Thumb_middle
+		{
+			Collision Thumb_middle_0;
+			Thumb_middle_0.id = 34;
+			Thumb_middle_0.adjscent_id[0] = 33; Thumb_middle_0.adjscent_id[1] = 35;
+			Thumb_middle_0.init_Position << 0, -1.0f, 3.0f, 1;
+			Thumb_middle_0.init_radius = 11.0f;
+			Thumb_middle_0.joint_index = 19;
+			Collision_sphere.push_back(Thumb_middle_0);
+
+			Collision Thumb_middle_1;
+			Thumb_middle_1.id = 35;
+			Thumb_middle_1.adjscent_id[0] = 34; Thumb_middle_1.adjscent_id[1] = 36;
+			Thumb_middle_1.init_Position << 14, 0.0f, 1.0f, 1;
+			Thumb_middle_1.init_radius = 8.5f;
+			Thumb_middle_1.joint_index = 19;
+			Collision_sphere.push_back(Thumb_middle_1);
+
+			Collision Thumb_middle_2;
+			Thumb_middle_2.id = 36;
+			Thumb_middle_2.adjscent_id[0] = 35; Thumb_middle_2.adjscent_id[1] = 37;
+			Thumb_middle_2.init_Position << 24, 0.0f, 1.0f, 1;
+			Thumb_middle_2.init_radius = 8.3f;
+			Thumb_middle_2.joint_index = 19;
+			Collision_sphere.push_back(Thumb_middle_2);
+		}
+
+		//Thumb_top
+		{
+			Collision Thumb_top_0;
+			Thumb_top_0.id = 37;
+			Thumb_top_0.adjscent_id[0] = 36; Thumb_top_0.adjscent_id[1] = 38;
+			Thumb_top_0.init_Position << 0, -1, 1.0f, 1;
+			Thumb_top_0.init_radius = 8.0f;
+			Thumb_top_0.joint_index = 20;
+			Collision_sphere.push_back(Thumb_top_0);
+
+			Collision Thumb_top_1;
+			Thumb_top_1.id = 38;
+			Thumb_top_1.adjscent_id[0] = 37; Thumb_top_1.adjscent_id[1] = 39;
+			Thumb_top_1.init_Position << 9, -1, 1.0f, 1;
+			Thumb_top_1.init_radius = 6.0f;
+			Thumb_top_1.joint_index = 20;
+			Collision_sphere.push_back(Thumb_top_1);
+
+			Collision Thumb_top_2;
+			Thumb_top_2.id = 39;
+			Thumb_top_2.adjscent_id[0] = 38; Thumb_top_2.adjscent_id[1] = -1;
+			Thumb_top_2.init_Position << 16, 2, 1.0f, 1;
+			Thumb_top_2.init_radius = 5.0f;
+			Thumb_top_2.joint_index = 20;
+			Collision_sphere.push_back(Thumb_top_2);
+		}
+	}
+
+
+}
+
+void HandModel::updata_collosion()
+{
+	for (int i = 0; i < Collision_sphere.size(); ++i)
+	{
+		Collision_sphere[i].updata_Position << Joints[Collision_sphere[i].joint_index].global*Collision_sphere[i].init_Position + GlobalPosition;
+		Collision_sphere[i].updata_radius = Hand_scale(0)*Collision_sphere[i].init_radius;
+	}
+}
+
+void HandModel::create_adjacency_matrix()
+{
+	int NuMofCollision = Collision_sphere.size();
+	this->adjacency_matrix = Eigen::MatrixXi::Zero(NuMofCollision, NuMofCollision);
+	this->Collision_Judge_Matrix = Eigen::MatrixXi::Zero(NuMofCollision, NuMofCollision);
+
+	for (int i = 0; i < NuMofCollision; ++i)
+	{
+		adjacency_matrix(i, i) = 1;
+		if (Collision_sphere[i].adjscent_id[0] >= 0)  adjacency_matrix(i, Collision_sphere[i].adjscent_id[0]) = 1;
+		if (Collision_sphere[i].adjscent_id[1] >= 0)  adjacency_matrix(i, Collision_sphere[i].adjscent_id[1]) = 1;
+	}
+
+}
+
+std::pair<Vector3, Vector3> HandModel::Collision_to_Collision_distance(Collision& a, Collision&b)
+{
+	std::pair<Vector3, Vector3> shortest_path;
+
+	Eigen::Vector3f a_cernter(a.updata_Position.head(3));
+	Eigen::Vector3f b_cernter(b.updata_Position.head(3));
+
+	Eigen::Vector3f direction_a_to_b;
+
+	direction_a_to_b << b_cernter - a_cernter;
+	direction_a_to_b.normalize();
+
+	Eigen::Vector3f a_point, b_point;
+
+	a_point << a_cernter + a.updata_radius*direction_a_to_b;
+	b_point << b_cernter - b.updata_radius*direction_a_to_b;
+
+	shortest_path.first = a_point;
+	shortest_path.second = b_point;
+
+	return shortest_path;
+}
+
+std::vector<std::vector<std::pair<Vector3, Vector3>>> HandModel::create_distance_matrix()
+{
+	int NuMofCollision = Collision_sphere.size();
+	std::pair<Vector3, Vector3> big_distance(Vector3(0, 0, 0), Vector3(RAND_MAX, RAND_MAX, RAND_MAX));
+	std::vector<std::pair<Vector3, Vector3>> current_row(NuMofCollision, big_distance);
+	std::vector<std::vector<std::pair<Vector3, Vector3>>> distance_matrix(NuMofCollision, current_row);
+	
+	this->Collision_Judge_Matrix.setZero();
+
+	for (int i = 0; i < NuMofCollision; ++i) {
+		for (int j = 0; j < NuMofCollision; j++) {
+			if (adjacency_matrix(i, j) == 0)
+			{
+				std::pair<Vector3, Vector3> shortest_path =
+					Collision_to_Collision_distance(Collision_sphere[i], Collision_sphere[j]);
+				distance_matrix[i][j] = shortest_path;
+
+				float distance = ((Collision_sphere[j].updata_Position - Collision_sphere[i].updata_Position).head(3)).norm();
+
+				if (distance < (Collision_sphere[j].updata_radius + Collision_sphere[i].updata_radius))
+				{
+					this->Collision_Judge_Matrix(i, j) = 1;
+				}
+			}
+		}
+	}
+
+	return distance_matrix;
+}
+

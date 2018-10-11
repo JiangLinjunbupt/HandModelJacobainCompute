@@ -64,10 +64,13 @@ public:
 
 struct Collision
 {
+	int id;
+	int adjscent_id[2];
 	Eigen::Vector4f init_Position;    //局部坐标系
 	Eigen::Vector4f updata_Position;    //世界坐标系
 
-	float radius;
+	float init_radius;
+	float updata_radius;
 	int joint_index;
 };
 
@@ -99,7 +102,11 @@ public:
 	int* ParamsLowerBound;
 
 	Vector4 GlobalPosition;
+
+	//collision related
 	vector<Collision> Collision_sphere;
+	Eigen::MatrixXi adjacency_matrix;
+	Eigen::MatrixXi Collision_Judge_Matrix;
 
 	HandModel();
 	~HandModel() { delete ParamsLowerBound; delete ParamsUpperBound; delete Params; delete Joints; }
@@ -136,6 +143,10 @@ private:
 	//collision
 	void set_collosion();
 	void updata_collosion();
+	void create_adjacency_matrix();
+	std::vector<std::vector<std::pair<Vector3, Vector3>>> create_distance_matrix();
+	std::pair<Vector3, Vector3>  Collision_to_Collision_distance(Collision& a, Collision&b);
+
 private:
 	void normalize(float axis[3]) {
 		float sum = sqrt(axis[0] * axis[0] + axis[1] * axis[1] + axis[2] * axis[2]);
