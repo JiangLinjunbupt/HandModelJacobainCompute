@@ -144,9 +144,11 @@ private:
 	void set_collosion();
 	void updata_collosion();
 	void create_adjacency_matrix();
+	int Judge_Collision();
 	std::vector<std::vector<std::pair<Vector3, Vector3>>> create_distance_matrix();
 	std::pair<Vector3, Vector3>  Collision_to_Collision_distance(Collision& a, Collision&b);
-
+	Eigen::MatrixXf Compute_one_CollisionPoint_Jacobian(Collision& a,Eigen::Vector3f& point);
+	Eigen::MatrixXf Compute_Collision_Limit(Eigen::VectorXf& e_limit);
 private:
 	void normalize(float axis[3]) {
 		float sum = sqrt(axis[0] * axis[0] + axis[1] * axis[1] + axis[2] * axis[2]);

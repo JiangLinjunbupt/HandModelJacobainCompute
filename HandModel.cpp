@@ -710,7 +710,7 @@ void HandModel::Updata(float* params)
 	compute_global_matrix();
 
 	updata_collosion();
-	create_distance_matrix();
+	Judge_Collision();
 
 	Updata_Joints();
 	Updata_axis();
@@ -1364,6 +1364,102 @@ void HandModel::updata_collosion()
 	}
 }
 
+Eigen::MatrixXf HandModel::Compute_one_CollisionPoint_Jacobian(Collision& a, Eigen::Vector3f& point)
+{
+	float omiga = 3.141592f / 180.0f;
+	Eigen::MatrixXf Jacobain_ = Eigen::MatrixXf::Zero(3, NumberofParams);
+
+	int current_indx = a.joint_index;
+	Eigen::Vector3f current_CollisionPoint_position(point(0), point(1), point(2));
+
+	//计算时候会用到的变量
+	Eigen::Vector3f axis_base_position;
+	Eigen::Vector3f x_axis_position;
+	Eigen::Vector3f y_axis_position;
+	Eigen::Vector3f z_axis_position;
+
+	Eigen::Vector3f w_x, w_y, w_z;
+	Eigen::Vector3f S;
+	Eigen::Vector3f result;
+
+	while (current_indx >= 0)
+	{
+		axis_base_position << Joints[current_indx].CorrespondingPosition(0), Joints[current_indx].CorrespondingPosition(1), Joints[current_indx].CorrespondingPosition(2);
+
+		x_axis_position << Joints[current_indx].CorrespondingAxis[0](0), Joints[current_indx].CorrespondingAxis[0](1), Joints[current_indx].CorrespondingAxis[0](2);
+		y_axis_position << Joints[current_indx].CorrespondingAxis[1](0), Joints[current_indx].CorrespondingAxis[1](1), Joints[current_indx].CorrespondingAxis[1](2);
+		z_axis_position << Joints[current_indx].CorrespondingAxis[2](0), Joints[current_indx].CorrespondingAxis[2](1), Joints[current_indx].CorrespondingAxis[2](2);
+
+
+		w_x << (x_axis_position - axis_base_position);
+		w_y << (y_axis_position - axis_base_position);
+		w_z << (z_axis_position - axis_base_position);
+
+		w_x.normalize();
+		w_y.normalize();
+		w_z.normalize();
+
+		S << (current_CollisionPoint_position - axis_base_position);
+
+		int params_len = Joints[current_indx].params_length;
+		for (int idx = 0; idx < params_len; idx++)
+		{
+			int params_idx = Joints[current_indx].params_index[idx];
+
+			switch (Joints[current_indx].params_type[idx])
+			{
+			case dof_type(x_axis_rotate): {
+				result << omiga*w_x.cross(S);
+				Jacobain_(0, params_idx) += result(0);
+				Jacobain_(1, params_idx) += result(1);
+				Jacobain_(2, params_idx) += result(2);
+				break;
+			}
+			case dof_type(y_axis_rotate): {
+				result << omiga*w_y.cross(S);
+				Jacobain_(0, params_idx) += result(0);
+				Jacobain_(1, params_idx) += result(1);
+				Jacobain_(2, params_idx) += result(2);
+				break;
+			}
+			case dof_type(z_axis_rotate): {
+				result << omiga*w_z.cross(S);
+				Jacobain_(0, params_idx) += result(0);
+				Jacobain_(1, params_idx) += result(1);
+				Jacobain_(2, params_idx) += result(2);
+				break;
+			}
+			case dof_type(x_axis_trans): {
+				result << 1, 0, 0;
+				Jacobain_(0, params_idx) += result(0);
+				Jacobain_(1, params_idx) += result(1);
+				Jacobain_(2, params_idx) += result(2);
+				break;
+			}
+			case dof_type(y_axis_trans): {
+				result << 0, 1, 0;
+				Jacobain_(0, params_idx) += result(0);
+				Jacobain_(1, params_idx) += result(1);
+				Jacobain_(2, params_idx) += result(2);
+				break;
+			}
+			case dof_type(z_axis_trans): {
+				result << 0, 0, 1;
+				Jacobain_(0, params_idx) += result(0);
+				Jacobain_(1, params_idx) += result(1);
+				Jacobain_(2, params_idx) += result(2);
+				break;
+			}
+			}
+
+		}
+
+		current_indx = Joints[current_indx].parent_joint_index;
+	}
+
+	return Jacobain_;
+}
+
 void HandModel::create_adjacency_matrix()
 {
 	int NuMofCollision = Collision_sphere.size();
@@ -1402,6 +1498,30 @@ std::pair<Vector3, Vector3> HandModel::Collision_to_Collision_distance(Collision
 	return shortest_path;
 }
 
+int HandModel::Judge_Collision()
+{
+	int NuMofCollision = Collision_sphere.size();
+	this->Collision_Judge_Matrix.setZero();
+
+	int CollisionNUM = 0;
+	for (int i = 0; i < NuMofCollision; ++i) {
+		for (int j = 0; j < NuMofCollision; j++) {
+			if (adjacency_matrix(i, j) == 0)
+			{
+				float distance = ((Collision_sphere[j].updata_Position - Collision_sphere[i].updata_Position).head(3)).norm();
+
+				if (distance < (Collision_sphere[j].updata_radius + Collision_sphere[i].updata_radius))
+				{
+					this->Collision_Judge_Matrix(i, j) = 1;
+					++CollisionNUM;
+				}
+			}
+		}
+	}
+
+	return CollisionNUM;
+}
+
 std::vector<std::vector<std::pair<Vector3, Vector3>>> HandModel::create_distance_matrix()
 {
 	int NuMofCollision = Collision_sphere.size();
@@ -1409,8 +1529,6 @@ std::vector<std::vector<std::pair<Vector3, Vector3>>> HandModel::create_distance
 	std::vector<std::pair<Vector3, Vector3>> current_row(NuMofCollision, big_distance);
 	std::vector<std::vector<std::pair<Vector3, Vector3>>> distance_matrix(NuMofCollision, current_row);
 	
-	this->Collision_Judge_Matrix.setZero();
-
 	for (int i = 0; i < NuMofCollision; ++i) {
 		for (int j = 0; j < NuMofCollision; j++) {
 			if (adjacency_matrix(i, j) == 0)
@@ -1418,13 +1536,6 @@ std::vector<std::vector<std::pair<Vector3, Vector3>>> HandModel::create_distance
 				std::pair<Vector3, Vector3> shortest_path =
 					Collision_to_Collision_distance(Collision_sphere[i], Collision_sphere[j]);
 				distance_matrix[i][j] = shortest_path;
-
-				float distance = ((Collision_sphere[j].updata_Position - Collision_sphere[i].updata_Position).head(3)).norm();
-
-				if (distance < (Collision_sphere[j].updata_radius + Collision_sphere[i].updata_radius))
-				{
-					this->Collision_Judge_Matrix(i, j) = 1;
-				}
 			}
 		}
 	}
@@ -1432,3 +1543,45 @@ std::vector<std::vector<std::pair<Vector3, Vector3>>> HandModel::create_distance
 	return distance_matrix;
 }
 
+Eigen::MatrixXf HandModel::Compute_Collision_Limit(Eigen::VectorXf& e_limit)
+{
+	int NuMofCollision = Collision_sphere.size();
+	int CollisionNUM = Judge_Collision();
+	Eigen::MatrixXf J_col;
+	if (CollisionNUM > 0)
+	{
+		J_col = Eigen::MatrixXf::Zero(3 * CollisionNUM, NumberofParams);
+		e_limit = Eigen::VectorXf::Zero(3 * CollisionNUM, 1);
+
+		std::vector<std::vector<std::pair<Vector3, Vector3>>> distance_matrix = create_distance_matrix();
+
+		int count = 0;
+
+		for (int i = 0; i < NuMofCollision; ++i)
+		{
+			for (int j = 0; j < NuMofCollision; ++j)
+			{
+				if (Collision_Judge_Matrix(i, j) == 1)
+				{
+					Eigen::Vector3f target_point = distance_matrix[i][j].second;
+					Eigen::Vector3f now_point = distance_matrix[i][j].first;
+
+					e_limit(count * 3 + 0) = target_point(0) - now_point(0);
+					e_limit(count * 3 + 0) = target_point(1) - now_point(1);
+					e_limit(count * 3 + 0) = target_point(2) - now_point(2);
+
+					J_col.block(count * 3, 0, 3, NumberofParams) = Compute_one_CollisionPoint_Jacobian(Collision_sphere[i], now_point);
+					count++;
+				}
+			}
+		}
+	}
+	else
+	{
+		J_col = Eigen::MatrixXf::Zero(3, NumberofParams);
+		e_limit = Eigen::VectorXf::Zero(3, 1);
+	}
+
+	return J_col;
+
+}
