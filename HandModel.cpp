@@ -1548,6 +1548,7 @@ Eigen::MatrixXf HandModel::Compute_Collision_Limit(Eigen::VectorXf& e_limit)
 	int NuMofCollision = Collision_sphere.size();
 	int CollisionNUM = Judge_Collision();
 	Eigen::MatrixXf J_col;
+	float fraction = 0.1f;
 	if (CollisionNUM > 0)
 	{
 		J_col = Eigen::MatrixXf::Zero(3 * CollisionNUM, NumberofParams);
@@ -1566,9 +1567,9 @@ Eigen::MatrixXf HandModel::Compute_Collision_Limit(Eigen::VectorXf& e_limit)
 					Eigen::Vector3f target_point = distance_matrix[i][j].second;
 					Eigen::Vector3f now_point = distance_matrix[i][j].first;
 
-					e_limit(count * 3 + 0) = target_point(0) - now_point(0);
-					e_limit(count * 3 + 0) = target_point(1) - now_point(1);
-					e_limit(count * 3 + 0) = target_point(2) - now_point(2);
+					e_limit(count * 3 + 0) = fraction*(target_point(0) - now_point(0));
+					e_limit(count * 3 + 1) = fraction*(target_point(1) - now_point(1));
+					e_limit(count * 3 + 2) = fraction*(target_point(2) - now_point(2));
 
 					J_col.block(count * 3, 0, 3, NumberofParams) = Compute_one_CollisionPoint_Jacobian(Collision_sphere[i], now_point);
 					count++;
@@ -1584,4 +1585,26 @@ Eigen::MatrixXf HandModel::Compute_Collision_Limit(Eigen::VectorXf& e_limit)
 
 	return J_col;
 
+}
+
+
+void HandModel::MoveToUnCollision()
+{
+	Eigen::VectorXf e_col;
+	Eigen::MatrixXf J_col = Compute_Collision_Limit(e_col);
+
+	Eigen::MatrixXf D = Eigen::MatrixXf::Identity(NumberofParams, NumberofParams);
+	int omiga = 20;
+
+	Eigen::VectorXf dAngles = Eigen::VectorXf::Zero(NumberofParams, 1);
+
+	MatrixXf JtJ = 100*J_col.transpose()*J_col + omiga*D;
+	VectorXf JTe = 100*J_col.transpose()*e_col;
+
+	dAngles = JtJ.colPivHouseholderQr().solve(JTe);
+
+	for (int i = 0; i < NumberofParams; i++)
+		Params[i] += dAngles(i);
+
+	Updata(Params);
 }

@@ -358,7 +358,7 @@ void draw() {
 	//draw_ALL_joint_coordinate();
 	draw_Collision();
 	show_Collision();
-	//draw_target_difference();
+	draw_target_difference();
 	//draw_Hand_visible_vertex();
 
 	glFlush();
@@ -374,16 +374,17 @@ void idle() {
 	{
 		for (int i = 0; i < 26; ++i)
 		{
-			GetGloveData[i] = GetSharedMemeryPtr[i];
+			handmodel->Params[i] = GetSharedMemeryPtr[i];
 		}
 
-		handmodel->Updata(GetGloveData);
+		handmodel->Updata(handmodel->Params);
 	}
 	else
 	{
 		handmodel->MoveToJointTarget();
+	    //handmodel->MoveToUnCollision();
 	}
-	
+
 	End = clock();//结束计时
 	duration = double(End - Begin) / CLK_TCK;//duration就是运行函数所打的
 

@@ -1,10 +1,14 @@
 ﻿  HandModel.cpp
-HandModel.cpp(1368): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
-HandModel.cpp(1406): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+HandModel.cpp(1465): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+HandModel.cpp(1503): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+HandModel.cpp(1527): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+HandModel.cpp(1548): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+  源.cpp
+源.cpp(313): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
   正在生成代码
-  251 of 7875 functions ( 3.2%) were compiled, the rest were copied from previous compilation.
+  287 of 7618 functions ( 3.8%) were compiled, the rest were copied from previous compilation.
     4 functions were new in current compilation
-    41 functions had inline decision re-evaluated but remain unchanged
+    50 functions had inline decision re-evaluated but remain unchanged
   已完成代码的生成
   HandmodelJacobainCompute.vcxproj -> O:\vsstudioProjects\HandmodelJacobainCompute\x64\Release\HandmodelJacobainCompute.exe
   HandmodelJacobainCompute.vcxproj -> O:\vsstudioProjects\HandmodelJacobainCompute\x64\Release\HandmodelJacobainCompute.pdb (Full PDB)
